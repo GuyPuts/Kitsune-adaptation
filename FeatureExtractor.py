@@ -17,6 +17,7 @@ from scapy.all import *
 import os.path
 import platform
 import subprocess
+import csv
 
 
 #Extracts Kitsune features from given pcap file one packet at a time using "get_next_vector()"
@@ -105,7 +106,7 @@ class FE:
             self.limit = len(self.scapyin)
             print("Loaded " + str(len(self.scapyin)) + " Packets.")
 
-    def get_next_vector(self):
+    def get_next_vector(self, single=False):
         if self.curPacketIndx == self.limit:
             if self.parse_type == 'tsv':
                 self.tsvinf.close()
@@ -119,8 +120,10 @@ class FE:
             framelen = row[1]
             srcIP = ''
             dstIP = ''
+            tcpFlags = ''
             tcpFlags = row[19]
-            payload = int(row[20])+int(row[21])
+            payload = ''
+            #payload = int(row[20])+int(row[21])
             if row[4] != '':  # IPv4
                 srcIP = row[4]
                 dstIP = row[5]
@@ -147,8 +150,6 @@ class FE:
                 elif srcIP + srcproto + dstIP + dstproto == '':  # some other protocol
                     srcIP = row[2]  # src MAC
                     dstIP = row[3]  # dst MAC
-            print(tcpFlags)
-            print(payload)
         elif self.parse_type == "scapy":
             packet = self.scapyin[self.curPacketIndx]
             IPtype = np.nan
@@ -196,7 +197,8 @@ class FE:
             return []
 
         self.curPacketIndx = self.curPacketIndx + 1
-
+        if not single:
+            tcpFlags = False
 
         ### Extract Features
         try:
@@ -210,7 +212,7 @@ class FE:
 
     def pcap2tsv_with_tshark(self):
         print('Parsing with tshark...')
-        fields = "-e frame.time_epoch -e frame.len -e eth.src -e eth.dst -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -e icmp.type -e icmp.code -e arp.opcode -e arp.src.hw_mac -e arp.src.proto_ipv4 -e arp.dst.hw_mac -e arp.dst.proto_ipv4 -e ipv6.src -e ipv6.dst -e tcp.flags -e tcp.len -e udp.length"
+        fields = "-e frame.time_epoch -e frame.len -e eth.src -e eth.dst -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -e icmp.type -e icmp.code -e arp.opcode -e arp.src.hw_mac -e arp.src.proto_ipv4 -e arp.dst.hw_mac -e arp.dst.proto_ipv4 -e ipv6.src -e ipv6.dst -e tcp.flags -e tcp.len -e udp.length -e http.response.code"
         cmd =  '"' + self._tshark + '" -r '+ self.path +' -T fields '+ fields +' -E header=y -E occurrence=f > '+self.path+".tsv"
         subprocess.call(cmd,shell=True)
         print("tshark parsing complete. File saved as: "+self.path +".tsv")
@@ -218,14 +220,28 @@ class FE:
     def get_num_features(self):
         return len(self.nstat.getNetStatHeaders())
     
-    def get_all_vectors(self):
+    def get_all_vectors(self, csv_path=False, single=False):
         vectorList = []
-        while True:
-            if self.curPacketIndx % 1000 == 0:
-                print(self.curPacketIndx)
-            vector = self.get_next_vector()
-            if len(vector) == 0 or self.curPacketIndx > self.limit:
-                self.curPacketIndx = 0
-                return vectorList
-            else:
-                vectorList.append(vector)
+        if csv_path:
+            with open(csv_path, mode='w', newline='') as csv_file:
+                csv_writer = csv.writer(csv_file)
+                while True:
+                    if self.curPacketIndx % 100000 == 0:
+                        print(self.curPacketIndx)
+                    vector = self.get_next_vector(single)
+                    if len(vector) == 0 or self.curPacketIndx > self.limit:
+                        self.curPacketIndx = 0
+                        return csv_path
+                    else:
+                        csv_writer.writerow(vector)
+        else:
+            while True:
+                if self.curPacketIndx % 1000 == 0:
+                    print(self.curPacketIndx)
+                vector = self.get_next_vector()
+                if len(vector) == 0 or self.curPacketIndx > self.limit:
+                    self.curPacketIndx = 0
+                    return vectorList
+                else:
+                   vectorList.append(vector)
+

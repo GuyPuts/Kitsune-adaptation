@@ -780,14 +780,14 @@ class KitPlugin:
                 rd = csv.reader(fd, delimiter="\t", quotechar='"')
                 pkt_iter = -1
                 for row in rd:
-                    if pkt_iter % 100000 == 0:
+                    if pkt_iter % 10000 == 0:
                         print(pkt_iter)
                     if pkt_iter == -1:
                         pkt_iter += 1
                         continue
                     # Labels is the list of conversations, that has previously been sampled to 10 percent of conversations
                     for label in labels:
-                        if label[0] == 'Src':
+                        if label[0] == 'Src' or not label:
                             continue
                         if (row[4] == label[0] and row[6] == label[1] and row[5] == label[2] and row[7] == label[3]) or (row[4] == label[2] and row[6] == label[3] and row[5] == label[0] and row[7] == label[1]):
                             label_iter = label[5]
@@ -808,8 +808,8 @@ class KitPlugin:
             csvreader = csv.reader(packet_file)
             for row in csvreader:
                 if row:
-                    #packet_index = int(row[19])  # Assuming index is in the 20th column
-                    packet_index = int(row[22])  # Assuming index is in the 23rd column
+                    packet_index = int(row[19])  # Assuming index is in the 20th column
+                    #packet_index = int(row[22])  # Assuming index is in the 23rd column
                     subset_indices.add(packet_index)
                 row_index += 1
         # Step 2: Read the required statistics from the large feature CSV file
@@ -818,27 +818,28 @@ class KitPlugin:
             csvreader = csv.reader(feature_file)
             csvwriter = csv.writer(output_file)
 
+            counter = 0
             for row_num, row in enumerate(csvreader, start=1):
                 packet_index = row_num  # Index is the row number
                 # Check if the packet index is in the list of subset indices
+                counter += 1
                 if packet_index in subset_indices:
                     # Write the row to the output CSV file
                     csvwriter.writerow(row)
 
     # Runs a hyperparameter optimization on the supplied dataset, constrained by number of runs and packet limit
     # This version uses KitNET directly instead of running Kitsune as a whole
-    def hyper_opt_KitNET(self, feature_path, training_cutoff):
+    def hyper_opt_KitNET(self, day, attack_type, training_cutoff):
         def objective(trial):
             numAE = trial.suggest_int('numAE', 0, 200)
             learning_rate = trial.suggest_float('learning_rate', 0, 0.5)
             hidden_ratio = trial.suggest_float('hidden_ratio', 0, 1)
-            FMgrace = trial.suggest_int('FMgrace', 0, 500000)
+            FMgrace = trial.suggest_int('FMgrace', 0, 5000000)
 
             kit = KitNET(100, max_autoencoder_size=numAE, FM_grace_period=FMgrace, AD_grace_period=math.floor(training_cutoff*0.9), learning_rate=learning_rate, hidden_ratio=hidden_ratio)
             # Load the feature list beforehand to save time
             counter = 0
-
-            with open(feature_path) as fp:
+            with open(f"input_data/attack_types/{day}_features_{attack_type}.csv") as fp:
                 rd_ft = csv.reader(fp, delimiter="\t", quotechar='"')
                 train_err = []
                 for packet in rd_ft:
@@ -848,72 +849,74 @@ class KitPlugin:
                         packet = np.array(packet)
                         if counter % 10000 == 0:
                             print("training: "+str(counter))
-                        if counter <= training_cutoff:
-                            train_err.append(kit.train(packet))
-                        else:
-                            break
+                        train_err.append(kit.train(packet))
                         counter += 1
+                    if counter >= training_cutoff:
+                        break
                 fp.close()
 
+            conv_train_err = self.map_results_to_conversation(train_err, f"input_data/attack_types/{day}_{attack_type}.pcap.tsv")
+            conv_train_err = [max(values) for values in conv_train_err.values()]
+
             y_pred = []
-            path = 'pickles/validateFeatureList.pkl'
+            path = 'pickles/medium_validate.pkl'
             counterValidate = 0
+            print('reading validate list')
             with open(path, 'rb') as f:
                 validateList = pickle.load(f)
             for packet in validateList:
-                score = kit.execute(packet)
-                if counterValidate % 100000:
-                    print("testing: "+str(counterValidate))
-                y_pred.append(score)
+                if packet:
+                    packet = packet[0].split(',')
+                    packet = [float(element) for element in packet]
+                    packet = np.array(packet)
+                    score = kit.execute(packet)
+                    if counterValidate % 10000:
+                        print("testing: "+str(counterValidate))
+                    y_pred.append(score)
+            conv_y_pred = self.map_results_to_conversation(y_pred, f"input_data/attack_types/monday_sample_medium_validate.pcap.tsv")
+            conv_y_pred = [max(values) for values in conv_y_pred.values()]
+            trial.set_user_attr("training_error", np.mean(conv_train_err))
+            trial.set_user_attr("train_median", np.median(conv_train_err))
+            trial.set_user_attr("train_25_percentile", np.percentile(conv_train_err, 25))
+            trial.set_user_attr("train_75_percentile", np.percentile(conv_train_err, 75))
+            trial.set_user_attr("train_max", np.max(conv_train_err))
+            trial.set_user_attr("testing_error", np.mean(conv_train_err))
+            trial.set_user_attr("test_median", np.median(conv_train_err))
+            trial.set_user_attr("test_25_percentile", np.percentile(conv_train_err, 25))
+            trial.set_user_attr("test_75_percentile", np.percentile(conv_train_err, 75))
+            trial.set_user_attr("test_max", np.max(conv_train_err))
 
-            trial.set_user_attr("training_error", np.mean(train_err))
-            trial.set_user_attr("train_median", np.median(train_err))
-            trial.set_user_attr("train_25_percentile", np.percentile(train_err, 25))
-            trial.set_user_attr("train_75_percentile", np.percentile(train_err, 75))
-            trial.set_user_attr("train_max", np.max(train_err))
-            trial.set_user_attr("testing_error", np.mean(train_err))
-            trial.set_user_attr("test_median", np.median(train_err))
-            trial.set_user_attr("test_25_percentile", np.percentile(train_err, 25))
-            trial.set_user_attr("test_75_percentile", np.percentile(train_err, 75))
-            trial.set_user_attr("test_max", np.max(train_err))
-
-            median_value = np.median(train_err)
-            median_absolute_deviation = np.median([abs(number - median_value) for number in train_err])
+            median_value = np.median(conv_train_err)
+            median_absolute_deviation = np.median([abs(number - median_value) for number in conv_train_err])
             trial.set_user_attr("mad", median_absolute_deviation)
 
             threshold = median_value + 2 * median_absolute_deviation
             trial.set_user_attr("threshold", threshold)
 
-            trial.set_user_attr("test_minus_train_error", np.mean(y_pred)-np.mean(train_err))
+            trial.set_user_attr("test_minus_train_error", np.mean(conv_y_pred)-np.mean(conv_train_err))
 
             anomaly_count = 0
-            for err in y_pred:
+            for err in conv_y_pred:
                 if err > threshold:
                     anomaly_count += 1
 
             trial.set_user_attr("anomaly_count", anomaly_count)
-            trial.set_user_attr("train_packets", training_cutoff)
-            trial.set_user_attr("test_packets", len(y_pred))
+            trial.set_user_attr("train_convs", len(train_err))
+            trial.set_user_attr("test_convs", len(conv_y_pred))
 
-            FPR = anomaly_count / len(y_pred)
+            FPR = anomaly_count / len(conv_y_pred)
             return FPR
 
         # Dashboard logic
         search_space = {
-            'numAE': [5, 10, 15, 25, 50, 75, 150],
-            'learning_rate': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1],
+            'numAE': [25, 50, 75],
+            'learning_rate': [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1],
             'hidden_ratio': [0.25, 0.5, 0.75],
             'FMgrace': [math.floor(0.05*training_cutoff), math.floor(0.10*training_cutoff), math.floor(0.20 * training_cutoff)]
         }
-        search_space = {
-            'numAE': [50],
-            'learning_rate': [0.0001],
-            'hidden_ratio': [0.25],
-            'FMgrace': [math.floor(0.05*training_cutoff)]
-        }
-        name = "mad2_hyperopt" + str(training_cutoff) + "learnlowerhigheragainappend"
-        study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), storage="sqlite:///hyperopt.db", study_name=name)
-        study.optimize(objective, n_trials=27)
+        name = f"mad2_hyperopt_final_{attack_type}"
+        study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), storage="sqlite:///hyperoptconvmediumfinal.db", study_name=name, load_if_exists=True)
+        study.optimize(objective, n_trials=3*9*3*3)
 
         # Create a new workbook and select the active worksheet
         wb = Workbook()
@@ -1291,7 +1294,7 @@ class KitPlugin:
                     if packet:
                         packet = packet[0].split(',')
                         result = results[counter]
-                        conv_number = packet[23]
+                        conv_number = packet[20]
                         if conv_number not in conv_dict:
                             conv_dict[conv_number] = []
                         conv_dict[conv_number].append(result)
@@ -1542,3 +1545,37 @@ class KitPlugin:
             count += 1
         excel_file = f"output_data/shap_{day}_{datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
         self.workbook.save(excel_file)
+
+    def train_kitsune(self):
+        with open(f"input_data/attack_types/monday_features.csv", newline='') as csvfile:
+            csv_reader = csv.reader(csvfile)
+            line_count = sum(1 for row in csv_reader)
+        kit = KitNET(100, max_autoencoder_size=25, FM_grace_period=int(0.1*line_count),
+                     AD_grace_period=line_count, learning_rate=0.00001,
+                     hidden_ratio=0.25)
+        # Load the feature list beforehand to save time
+        counter = 0
+        with open(f"input_data/attack_types/monday_features.csv") as fp:
+            rd_ft = csv.reader(fp, delimiter="\t", quotechar='"')
+            train_err = []
+            for packet in rd_ft:
+                if packet:
+                    packet = packet[0].split(',')
+                    packet = [float(element) for element in packet]
+                    packet = np.array(packet)
+                    if counter % 10000 == 0:
+                        print("training: " + str(counter))
+                    train_err.append(kit.train(packet))
+                    counter += 1
+                if counter >= line_count:
+                    break
+            fp.close()
+        median_value = np.median(train_err)
+        median_absolute_deviation = np.median([abs(number - median_value) for number in train_err])
+
+        threshold = median_value + 2 * median_absolute_deviation
+        print(threshold)
+        quit()
+        with open("pickles/anomDetectorFullDatasetNew.pkl", 'wb') as f:
+            pickle.dump(kit, f)
+

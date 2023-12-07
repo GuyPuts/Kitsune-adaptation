@@ -61,30 +61,6 @@ inputs = {
 # KitPlugin.shap_stats_summary_builder(testing_min, testing_max)
 # KitPlugin.shap_stats_excel_export()
 
-# Calculate EER and AUC values
-# KitPlugin = KitPlugin(input_path="input_data/mirai.pcap", packet_limit=200000, num_autenc=10, FMgrace=5000, ADgrace=50000, learning_rate=0.1, hidden_ratio=0.75)
-# KitPlugin.feature_loader()
-# KitPlugin.kit_trainer(0, 60000)
-# KitPlugin.model_pickle()
-# ONLY run this on a mixed batch of benign/malicious samples
-# RMSEs = KitPlugin.kit_runner(120000, 122000, normalize=True)
-# Labels
-# Create an array of zeros with 1622 entries
-# zeros = np.zeros(1622)
-# Create an array of ones with 378 entries
-# ones = np.ones(378)
-# Concatenate the two arrays to get the final array
-# labels = np.concatenate((zeros, ones))
-# KitPlugin.calc_auc_eer(RMSEs, labels)
-
-# KitPlugin = KitPlugin()
-# Random sample of 500000 packets, ordered by timestamp
-# KitPlugin.random_sample_pcap("input_data/Monday-WorkingHours.pcap", "input_data/Monday-WorkingHours_500k.pcap", 500000)
-# KitPlugin.random_sample_pcap("input_data/Monday-WorkingHours.pcap", "input_data/Monday-WorkingHours_1M.pcap", 1000000)
-
-# Out of every 1000 packets, it only keeps the first 100; so, only 10% of packets is kept. It will then do the same for the next 1000 packets
-# KitPlugin.interval_sample_pcap("input_data/Monday-WorkingHours.pcap", "input_data/Monday-WorkingHours_10_percent.pcap", 10)
-
 # Sample 10 percent of conversations
 # SampleKitPlugin = KitPlugin()
 ##conversations = SampleKitPlugin.sample_percentage_conversations(10, "input_data/Monday_Split/17_01-18_01.pcapng", "input_data/Monday_Split/17_01-18_01-sample-10.pcap")
@@ -136,7 +112,6 @@ def kitTester(day, attack_type):
     path = f'pickles/output_pickles_conv_basis/{day.title()}_{attack_type}_maxConvs.pkl'
     with open(path, 'wb') as f:
         pickle.dump(maxConvs, f)
-
     return maxConvs
 
 #kitplugin = KitPlugin(input_path="input_data/Monday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
@@ -261,4 +236,7 @@ results = kitplugin.shap_documenter("thursday")
 # kitplugin.most_significant_packets_sampler("tuesday", 0.2667368034640465)
 #results = kitplugin.shap_documenter("wednesday")
 
-#kitplugin.hyper_opt_KitNET("monday_features.csv")
+# with open(f"input_data/Wednesday-WorkingHours.pcap.tsv", newline='') as csvfile:
+#     csv_reader = csv.reader(csvfile)
+#     line_count = sum(1 for row in csv_reader)
+# print(f"PCAP: {line_count}")

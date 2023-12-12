@@ -79,22 +79,30 @@ inputs = {
 def kitTester(day, attack_type):
     from KitPlugin import KitPlugin
     kitplugin = KitPlugin()
-    # print('reading labels file')
-    # labels = kitplugin.read_label_file(f'input_data/attack_types/{day}_{attack_type}.csv')
-    # iter = 0
-    # for label in labels:
-    #     if iter == 0:
-    #         iter += 1
-    #         continue
-    #     label.append(str(labels.index(label)))
-    # print('sampling packets by conversation')
-    # kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
-    #                                          f'input_data/attack_types/{day}_{attack_type}.pcap.tsv', labels)
-    #
-    # # Map samples to features of an existing featureList
-    # kitplugin.map_packets_to_features(f'input_data/attack_types/{day}_{attack_type}.pcap.tsv',
-    #                                   f'input_data/attack_types/{day}_features.csv',
-    #                                   f'input_data/attack_types/{day}_features_{attack_type}.csv')
+    print('reading labels file')
+    labels = kitplugin.read_label_file(f'input_data/attack_types/{day}_{attack_type}.csv')
+    iter = 0
+    for label in labels:
+        if iter == 0:
+            iter += 1
+            continue
+        label.append(str(labels.index(label)))
+    print('here')
+    path = f'pickles/labels_{day}_{attack_type}.pkl'
+    counterValidate = 0
+    print('reading validate list')
+    # with open(path, 'rb') as f:
+    #     labels = pickle.load(f)
+    # with open(path, 'rb') as f:
+    #     labels = pickle.load(f)
+    print('sampling packets by conversation')
+    kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
+                                             f'input_data/attack_types/{day}_{attack_type}.pcap.tsv', labels)
+
+    # Map samples to features of an existing featureList
+    kitplugin.map_packets_to_features(f'input_data/attack_types/{day}_{attack_type}.pcap.tsv',
+                                      f'input_data/attack_types/{day}_features.csv',
+                                      f'input_data/attack_types/{day}_features_{attack_type}.csv')
     results = kitplugin.run_trained_kitsune_from_feature_csv(
         f"input_data/attack_types/{day}_features_{attack_type}.csv", 0, np.Inf)
     #plt.title(f'{day.title()}_{attack_type}')
@@ -208,12 +216,12 @@ def create_attack_barchart_excel(data_for_attack_types):
     # Save the workbook
     wb.save("attack_barchart.xlsx")
 
-# attacks1 = ["Infiltration - Portscan"]
-# convs = []
-# for attack in attacks1:
-#     print(attack)
-#     convs.append(kitTester("thursday", attack))
-#
+attacks1 = ["Botnet - Attempted", "Botnet", "DDoS", "Portscan"]
+convs = []
+for attack in attacks1:
+    print(attack)
+    convs.append(kitTester("friday", attack))
+
 # attacks2 = ["benign - small", "FTP-Patator", "FTP-Patator - Attempted", "SSH-Patator", "SSH-Patator - Attempted"]
 # for attack in attacks2:
 #     print(attack)
@@ -231,8 +239,14 @@ def create_attack_barchart_excel(data_for_attack_types):
 #kitplugin.feature_builder("input_data/attack_types/monday_features_test.csv", True)
 
 kitplugin = KitPlugin()
-#kitplugin.most_significant_packets_sampler("thursday", 0.2667368034640465)
-results = kitplugin.shap_documenter("thursday")
+# kitplugin.most_significant_packets_sampler("tuesday", 0.0739)
+# kitplugin.most_significant_packets_sampler("wednesday", 0.0739)
+# kitplugin.most_significant_packets_sampler("thursday", 0.0739)
+kitplugin.most_significant_packets_sampler("friday", 0.2667368034640465)
+# results = kitplugin.shap_documenter("tuesday")
+# results = kitplugin.shap_documenter("wednesday")
+# results = kitplugin.shap_documenter("thursday")
+results = kitplugin.shap_documenter("friday")
 # kitplugin.most_significant_packets_sampler("tuesday", 0.2667368034640465)
 #results = kitplugin.shap_documenter("wednesday")
 

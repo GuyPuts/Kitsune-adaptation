@@ -1172,7 +1172,7 @@ class KitPlugin:
                 pickle.dump(kit, f)
         return y_pred
 
-    def run_trained_kitsune_from_feature_csv(self, test_path, test_start, test_limit):
+    def run_trained_kitsune_from_feature_csv(self, test_path, test_start, test_limit, kit_path=False):
         #kit = KitNET(100, 10, math.floor(12000000 * 0.05), math.floor(12000000 * 0.9), 0.30, 0.25)
         # kit = KitNET(100, 50, math.floor(10000000 * 0.05), 10000000, 0.0005, 0.25)
         #
@@ -1227,8 +1227,12 @@ class KitPlugin:
         #     path = 'pickles/anomDetector.pkl'
         #     with open(path, 'wb') as f:
         #         pickle.dump(kit, f)
-        with open("pickles/anomDetectorFullDataset.pkl", 'rb') as f:
-            kit = pickle.load(f)
+        if kit_path:
+            with open(kit_path, 'rb') as f:
+                kit = pickle.load(f)
+        else:
+            with open("pickles/anomDetectorFullDataset.pkl", 'rb') as f:
+                kit = pickle.load(f)
 
         counter = 0
         results = []
@@ -1587,4 +1591,3 @@ class KitPlugin:
         quit()
         with open("pickles/anomDetectorFullDatasetNew.pkl", 'wb') as f:
             pickle.dump(kit, f)
-

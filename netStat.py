@@ -70,20 +70,13 @@ class netStat:
 
         return src_subnet, dst_subnet
 
-    def updateGetStats(self, IPtype, srcMAC,dstMAC, srcIP, srcProtocol, dstIP, dstProtocol, datagramSize, timestamp, tcpFlags=False, payload = 0):
+    def updateGetStats(self, IPtype, srcMAC,dstMAC, srcIP, srcProtocol, dstIP, dstProtocol, datagramSize, timestamp, tcpFlags=False, payload = 0, extra=False):
         # Host BW: Stats on the srcIP's general Sender Statistics
         # Hstat = np.zeros((3*len(self.Lambdas,)))
         # for i in range(len(self.Lambdas)):
         #     Hstat[(i*3):((i+1)*3)] = self.HT_H.update_get_1D_Stats(srcIP, timestamp, datagramSize, self.Lambdas[i])
 
-        if tcpFlags and tcpFlags == "":
-            return np.zeroes(8*len(self.Lambdas))
-        if tcpFlags and tcpFlags != "":
-            # MAC.IP: Stats on src MAC-IP relationships
-            MIstat = np.zeros((8 * len(self.Lambdas, )))
-            for i in range(len(self.Lambdas)):
-                MIstat[(i*8):((i+1)*8)] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize, self.Lambdas[i], tcpFlags=tcpFlags)
-            return MIstat
+
         #MAC.IP: Stats on src MAC-IP relationships
         MIstat =  np.zeros((3*len(self.Lambdas,)))
         for i in range(len(self.Lambdas)):
@@ -108,7 +101,20 @@ class netStat:
             for i in range(len(self.Lambdas)):
                 HpHpstat[(i*7):((i+1)*7)] = self.HT_Hp.update_get_1D2D_Stats(srcIP + srcProtocol, dstIP + dstProtocol, timestamp, datagramSize, self.Lambdas[i])
 
-        return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat))  # concatenation of stats into one stat vector
+        if tcpFlags and tcpFlags == "":
+            return np.zeroes(8*len(self.Lambdas))
+        if tcpFlags and tcpFlags != "":
+            # MAC.IP: Stats on src MAC-IP relationships
+            tcpstat = np.zeros((8 * len(self.Lambdas, )))
+            for i in range(len(self.Lambdas)):
+                tcpstat[(i*8):((i+1)*8)] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize, self.Lambdas[i], tcpFlags=tcpFlags)
+                if extra:
+                    print('test')
+                    tcpstat[(i * 8):((i + 1) * 8)] = np.array([69, 69, 69, 69, 69, 69, 69, 69])
+                else:
+                    print('train')
+                    tcpstat[(i * 8):((i + 1) * 8)] = np.array([420, 420, 420, 420, 420, 420, 420, 420])
+        return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, tcpstat))  # concatenation of stats into one stat vector
 
     def getNetStatHeaders(self):
         MIstat_headers = []

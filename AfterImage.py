@@ -29,11 +29,11 @@ class incStat:
 
     def insert(self, v, t=0, tcpFlags=False):  # v is a scalar, t is v's arrival the timestamp
         if tcpFlags:
-            self.tcpPkts += 1
             flag_int = int(tcpFlags, 16)  # Convert hex string to integer
             flags = ["FIN", "SYN", "RST", "PSH", "ACK", "URG", "ECE", "CWR"]
             for i, flag in enumerate(flags):
                 if flag_int & (1 << i):  # Check if the flag is set
+                    self.tcpPkts += 1
                     self.flag_counts[flag] += 1
             return True
 
@@ -322,7 +322,10 @@ class incStatDB:
 
     # updates/registers stream
     def update(self,ID,t,v,Lambda=1,isTypeDiff=False,tcpFlags=False):
-        incS = self.register(ID,Lambda,t,isTypeDiff)
+        if tcpFlags:
+            incS = self.register(f"tcp_{ID}",Lambda,t,isTypeDiff)
+        else:
+            incS = self.register(ID, Lambda, t, isTypeDiff)
         incS.insert(v,t,tcpFlags=tcpFlags)
         return incS
 
@@ -394,7 +397,8 @@ class incStatDB:
     # Updates and then pulls current 1D stats from the given ID. Automatically registers previously unknown stream IDs
     def update_get_1D_Stats(self, ID,t,v,Lambda=1,isTypeDiff=False, tcpFlags=False):  # weight, mean, std
         incS = self.update(ID,t,v,Lambda,isTypeDiff, tcpFlags=tcpFlags)
-        return incS.allstats_1D(tcpFlags)
+        flags = incS.allstats_1D(tcpFlags)
+        return flags
 
 
     # Updates and then pulls current correlative stats between the given IDs. Automatically registers previously unknown stream IDs, and cov tracking

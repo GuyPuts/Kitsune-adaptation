@@ -106,7 +106,7 @@ class FE:
             self.limit = len(self.scapyin)
             print("Loaded " + str(len(self.scapyin)) + " Packets.")
 
-    def get_next_vector(self, single=False):
+    def get_next_vector(self, single=False, extra=False):
         if self.curPacketIndx == self.limit:
             if self.parse_type == 'tsv':
                 self.tsvinf.close()
@@ -115,6 +115,8 @@ class FE:
         ### Parse next packet ###
         if self.parse_type == "tsv":
             row = self.tsvin.__next__()
+            if len(row) < 2:
+                row = row[0].split(',')
             IPtype = np.nan
             timestamp = row[0]
             framelen = row[1]
@@ -197,14 +199,12 @@ class FE:
             return []
 
         self.curPacketIndx = self.curPacketIndx + 1
-        if not single:
-            tcpFlags = False
 
         ### Extract Features
         try:
             return self.nstat.updateGetStats(IPtype, srcMAC, dstMAC, srcIP, srcproto, dstIP, dstproto,
                                                  int(framelen),
-                                                 float(timestamp), tcpFlags, payload)
+                                                 float(timestamp), tcpFlags, payload, extra=extra)
         except Exception as e:
             print(e)
             return []
@@ -218,9 +218,10 @@ class FE:
         print("tshark parsing complete. File saved as: "+self.path +".tsv")
 
     def get_num_features(self):
+        return 140
         return len(self.nstat.getNetStatHeaders())
     
-    def get_all_vectors(self, csv_path=False, single=False):
+    def get_all_vectors(self, csv_path=False, single=False, extra=False):
         vectorList = []
         if csv_path:
             with open(csv_path, mode='w', newline='') as csv_file:
@@ -228,7 +229,7 @@ class FE:
                 while True:
                     if self.curPacketIndx % 100000 == 0:
                         print(self.curPacketIndx)
-                    vector = self.get_next_vector(single)
+                    vector = self.get_next_vector(single, extra=extra)
                     if len(vector) == 0 or self.curPacketIndx > self.limit:
                         self.curPacketIndx = 0
                         return csv_path

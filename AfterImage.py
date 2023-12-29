@@ -123,7 +123,10 @@ class incStat:
         self.cur_var = abs(self.CF2 / self.w - math.pow(self.cur_mean, 2))
         # Return mean of tcp flags
         if tcpFlags:
-            flags = [flag / self.tcpPkts for flag in list(self.flag_counts.values())]
+            if self.tcpPkts > 0:
+                flags = [flag / self.tcpPkts for flag in list(self.flag_counts.values())]
+            else:
+                flags = [0, 0, 0, 0, 0, 0, 0, 0]
             return flags
         return [self.w, self.cur_mean, self.cur_var]
 

@@ -281,7 +281,6 @@ def shit_we_have_to_train_kitsune_again(path, newFeatures):
     with open(f"pickles/{newFeatures}/anomDetector.pkl", 'wb') as f:
         pickle.dump(newkitnet, f)
 
-
 attacks1 = ["benign - small", "Infiltration - Attempted", "Infiltration"]
 convs = []
 for attack in attacks1:

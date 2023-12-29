@@ -204,7 +204,7 @@ class FE:
         try:
             return self.nstat.updateGetStats(IPtype, srcMAC, dstMAC, srcIP, srcproto, dstIP, dstproto,
                                                  int(framelen),
-                                                 float(timestamp), tcpFlags, payload, extra=extra)
+                                                 float(timestamp), tcpFlags, payload, ftp=True)
         except Exception as e:
             print(e)
             return []
@@ -218,7 +218,7 @@ class FE:
         print("tshark parsing complete. File saved as: "+self.path +".tsv")
 
     def get_num_features(self):
-        return 140
+        return 100
         return len(self.nstat.getNetStatHeaders())
     
     def get_all_vectors(self, csv_path=False, single=False, extra=False):

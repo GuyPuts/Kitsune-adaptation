@@ -1,4 +1,7 @@
 import math
+from collections import deque
+from datetime import timedelta
+
 import numpy as np
 
 
@@ -26,8 +29,16 @@ class incStat:
             "ECE": 0,
             "CWR": 0
         }
+        self.ftp_threshold_size = 100
+        self.ftp_threshold_packets = 5
+        self.ftp_time_window = timedelta(minutes=5)
+        self.ftp_packets = deque()
+        self.ftp_recent_packets = deque()
+        self.ssh_threshold_syn = 4
+        self.ssh_time_window = timedelta(minutes=5)
+        self.ssh_syn_flags = deque()
 
-    def insert(self, v, t=0, tcpFlags=False):  # v is a scalar, t is v's arrival the timestamp
+    def insert(self, v, t=0, tcpFlags=False, ftp=False, ssh=False):  # v is a scalar, t is v's arrival the timestamp
         if tcpFlags:
             flag_int = int(tcpFlags, 16)  # Convert hex string to integer
             flags = ["FIN", "SYN", "RST", "PSH", "ACK", "URG", "ECE", "CWR"]
@@ -36,6 +47,26 @@ class incStat:
                     self.tcpPkts += 1
                     self.flag_counts[flag] += 1
             return True
+
+        if ftp:
+            self.ftp_packets.append((t, v))
+            self.ftp_recent_packets.append((t, v))
+
+            # Remove older packets outside the time window
+            while self.ftp_recent_packets and t - self.ftp_recent_packets[0][0] > self.ftp_time_window.total_seconds():
+                self.ftp_recent_packets.popleft()
+            if not ssh:
+                return True
+
+        if ssh and not isinstance(tcpFlags, bool):
+            flag_int = int(tcpFlags, 16)
+            syn_flag = bool(flag_int & (1 << 1))  # Checking SYN flag
+
+            if syn_flag:
+                self.ssh_syn_flags.append((t, syn_flag))
+
+                while self.ssh_syn_flags and t - self.ssh_syn_flags[0][0] > self.ssh_time_window:
+                    self.ssh_syn_flags.popleft()
 
         if self.isTypeDiff:
             dif = t - self.lastTimestamp
@@ -118,16 +149,22 @@ class incStat:
         return math.sqrt(A)
 
     #calculates and pulls all stats on this stream
-    def allstats_1D(self, tcpFlags=False):
+    def allstats_1D(self, tcpFlags=False, ftp=False, ssh=False):
         self.cur_mean = self.CF1 / self.w
         self.cur_var = abs(self.CF2 / self.w - math.pow(self.cur_mean, 2))
         # Return mean of tcp flags
-        if tcpFlags:
+        if tcpFlags and not ssh:
             if self.tcpPkts > 0:
                 flags = [flag / self.tcpPkts for flag in list(self.flag_counts.values())]
             else:
                 flags = [0, 0, 0, 0, 0, 0, 0, 0]
             return flags
+        elif ftp:
+            count = sum(1 for packet in self.ftp_recent_packets if packet[1] < self.ftp_threshold_size)
+            return float(count > self.ftp_threshold_packets)
+        elif ssh:
+            count_syn_flags = sum(1 for _, flag in self.ssh_syn_flags if flag)
+            return count_syn_flags > self.ssh_threshold_syn
         return [self.w, self.cur_mean, self.cur_var]
 
     #calculates and pulls all stats on this stream, and stats shared with the indicated stream
@@ -324,12 +361,16 @@ class incStatDB:
         return inc_cov
 
     # updates/registers stream
-    def update(self,ID,t,v,Lambda=1,isTypeDiff=False,tcpFlags=False):
+    def update(self,ID,t,v,Lambda=1,isTypeDiff=False,tcpFlags=False,ftp=False,ssh=False):
         if tcpFlags:
             incS = self.register(f"tcp_{ID}",Lambda,t,isTypeDiff)
+        elif ftp:
+            incS = self.register(f"ftp_{ID}", Lambda, t, isTypeDiff)
+        elif ssh:
+            incS = self.register(f"ssh_{ID}", Lambda, t, isTypeDiff)
         else:
             incS = self.register(ID, Lambda, t, isTypeDiff)
-        incS.insert(v,t,tcpFlags=tcpFlags)
+        incS.insert(v,t,tcpFlags=tcpFlags,ftp=ftp)
         return incS
 
     # Pulls current stats from the given ID
@@ -398,10 +439,10 @@ class incStatDB:
         return [np.sqrt(rad),np.sqrt(mag)]
 
     # Updates and then pulls current 1D stats from the given ID. Automatically registers previously unknown stream IDs
-    def update_get_1D_Stats(self, ID,t,v,Lambda=1,isTypeDiff=False, tcpFlags=False):  # weight, mean, std
-        incS = self.update(ID,t,v,Lambda,isTypeDiff, tcpFlags=tcpFlags)
-        flags = incS.allstats_1D(tcpFlags)
-        return flags
+    def update_get_1D_Stats(self, ID,t,v,Lambda=1,isTypeDiff=False, tcpFlags=False, ftp=False, ssh=False):  # weight, mean, std
+        incS = self.update(ID,t,v,Lambda,isTypeDiff, tcpFlags=tcpFlags, ftp=ftp, ssh=ssh)
+        stats = incS.allstats_1D(tcpFlags, ftp, ssh)
+        return stats
 
 
     # Updates and then pulls current correlative stats between the given IDs. Automatically registers previously unknown stream IDs, and cov tracking

@@ -70,7 +70,7 @@ class netStat:
 
         return src_subnet, dst_subnet
 
-    def updateGetStats(self, IPtype, srcMAC,dstMAC, srcIP, srcProtocol, dstIP, dstProtocol, datagramSize, timestamp, tcpFlags=False, payload = 0, extra=False):
+    def updateGetStats(self, IPtype, srcMAC,dstMAC, srcIP, srcProtocol, dstIP, dstProtocol, datagramSize, timestamp, tcpFlags=False, payload = 0, ftp=False, ssh=False):
         # Host BW: Stats on the srcIP's general Sender Statistics
         # Hstat = np.zeros((3*len(self.Lambdas,)))
         # for i in range(len(self.Lambdas)):
@@ -103,12 +103,20 @@ class netStat:
 
         if tcpFlags and tcpFlags == "":
             return np.zeroes(8*len(self.Lambdas))
-        if tcpFlags and tcpFlags != "":
+        if tcpFlags and tcpFlags != "" and not ssh:
             # MAC.IP: Stats on src MAC-IP relationships
             tcpstat = np.zeros((8 * len(self.Lambdas, )))
             for i in range(len(self.Lambdas)):
                 tcpstat[(i*8):((i+1)*8)] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize, self.Lambdas[i], tcpFlags=tcpFlags)
-        return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, tcpstat))  # concatenation of stats into one stat vector
+        ftpstat = np.zeros(1)
+        if ftp and dstProtocol == '21':
+            ftpstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                        self.Lambdas[i], ftp=True)
+        sshstat = np.zeros(1)
+        if ssh and dstProtocol == '22':
+            sshstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                        self.Lambdas[i], tcpFlags=tcpFlags, ssh=True)
+        return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, ftpstat))  # concatenation of stats into one stat vector
 
     def getNetStatHeaders(self):
         MIstat_headers = []

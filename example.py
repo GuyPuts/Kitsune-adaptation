@@ -82,34 +82,34 @@ inputs = {
 def kitTester(day, attack_type, newFeatures=False):
     from KitPlugin import KitPlugin
     kitplugin = KitPlugin()
-    # print('reading labels file')
-    # labels = kitplugin.read_label_file(f'input_data/attack_types/{day}_{attack_type}.csv')
-    # iter = 0
-    # for label in labels:
-    #     if iter == 0:
-    #         iter += 1
-    #         continue
-    #     label.append(str(labels.index(label)))
-    #
-    # if newFeatures:
-    #     if not os.path.exists(f'input_data/{newFeatures}'):
-    #         os.makedirs(f'input_data/{newFeatures}')
-    #         print(f"Directory 'input_data/{newFeatures}' created successfully.")
-    #     else:
-    #         print(f"Directory 'input_data/{newFeatures}' already exists.")
-    #     if not os.path.exists(f'input_data/{newFeatures}/attack_types'):
-    #         os.makedirs(f'input_data/{newFeatures}/attack_types')
-    #         print(f"Directory 'input_data/{newFeatures}/attack_types' created successfully.")
-    #     else:
-    #         print(f"Directory 'input_data/{newFeatures}/attack_types' already exists.")
-    #
-    # print('sampling packets by conversation')
-    # if newFeatures:
-    #     kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
-    #                                              f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', labels)
-    # else:
-    #     kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
-    #                                          f'input_data/attack_types/{day}_{attack_type}.pcap.tsv', labels)
+    print('reading labels file')
+    labels = kitplugin.read_label_file(f'input_data/attack_types/{day}_{attack_type}.csv')
+    iter = 0
+    for label in labels:
+        if iter == 0:
+            iter += 1
+            continue
+        label.append(str(labels.index(label)))
+
+    if newFeatures:
+        if not os.path.exists(f'input_data/{newFeatures}'):
+            os.makedirs(f'input_data/{newFeatures}')
+            print(f"Directory 'input_data/{newFeatures}' created successfully.")
+        else:
+            print(f"Directory 'input_data/{newFeatures}' already exists.")
+        if not os.path.exists(f'input_data/{newFeatures}/attack_types'):
+            os.makedirs(f'input_data/{newFeatures}/attack_types')
+            print(f"Directory 'input_data/{newFeatures}/attack_types' created successfully.")
+        else:
+            print(f"Directory 'input_data/{newFeatures}/attack_types' already exists.")
+
+    print('sampling packets by conversation')
+    if newFeatures:
+        kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
+                                                 f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', labels)
+    else:
+        kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
+                                             f'input_data/attack_types/{day}_{attack_type}.pcap.tsv', labels)
 
     # Map samples to features of an existing featureList
     if newFeatures:
@@ -120,7 +120,7 @@ def kitTester(day, attack_type, newFeatures=False):
         with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'w') as file:
             file.writelines(non_blank_lines)
         fe = FE(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv')
-        fe.get_all_vectors(f'input_data/{newFeatures}/attack_types/{day}_features_{attack_type}.csv', extra=True)
+        fe.get_all_vectors(f'input_data/{newFeatures}/attack_types/{day}_features_{attack_type}.csv')
     else:
         kitplugin.map_packets_to_features(f'input_data/attack_types/{day}_{attack_type}.pcap.tsv',
                                       f'input_data/attack_types/{day}_features.csv',
@@ -281,11 +281,12 @@ def shit_we_have_to_train_kitsune_again(path, newFeatures):
     with open(f"pickles/{newFeatures}/anomDetector.pkl", 'wb') as f:
         pickle.dump(newkitnet, f)
 
-attacks1 = ["benign - small", "Infiltration - Attempted", "Infiltration"]
+attacks1 = ["benign - small", "FTP-Patator - Attempted", "FTP-Patator", "SSH-Patator - Attempted", "SSH-Patator"]
+
 convs = []
 for attack in attacks1:
     print(attack)
-    convs.append(kitTester("thursday", attack, newFeatures="tcpFlags"))
+    convs.append(kitTester("tuesday", attack, newFeatures="base"))
 
 # attacks2 = ["benign - small", "FTP-Patator", "FTP-Patator - Attempted", "SSH-Patator", "SSH-Patator - Attempted"]
 # for attack in attacks2:

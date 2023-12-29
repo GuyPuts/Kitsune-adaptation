@@ -841,7 +841,11 @@ class KitPlugin:
             kit = KitNET(100, max_autoencoder_size=numAE, FM_grace_period=FMgrace, AD_grace_period=math.floor(training_cutoff*0.9), learning_rate=learning_rate, hidden_ratio=hidden_ratio)
             # Load the feature list beforehand to save time
             counter = 0
-            with open(f"input_data/attack_types/{day}_features_{attack_type}.csv") as fp:
+            if attack_type == "all":
+                path = f"input_data/attack_types/{day}_features.csv"
+            else:
+                path = f"input_data/attack_types/{day}_features_{attack_type}.csv"
+            with open(path) as fp:
                 rd_ft = csv.reader(fp, delimiter="\t", quotechar='"')
                 train_err = []
                 for packet in rd_ft:
@@ -857,7 +861,11 @@ class KitPlugin:
                         break
                 fp.close()
 
-            conv_train_err = self.map_results_to_conversation(train_err, f"input_data/attack_types/{day}_{attack_type}.pcap.tsv")
+            if attack_type == "all":
+                conv_train_err = self.map_results_to_conversation(train_err,
+                                                                  f"input_data/attack_types/{day}_all.pcap.tsv")
+            else:
+                conv_train_err = self.map_results_to_conversation(train_err, f"input_data/attack_types/{day}_{attack_type}.pcap.tsv")
             conv_train_err = [max(values) for values in conv_train_err.values()]
 
             y_pred = []

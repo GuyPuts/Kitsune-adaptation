@@ -108,12 +108,6 @@ class netStat:
             tcpstat = np.zeros((8 * len(self.Lambdas, )))
             for i in range(len(self.Lambdas)):
                 tcpstat[(i*8):((i+1)*8)] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize, self.Lambdas[i], tcpFlags=tcpFlags)
-                if extra:
-                    print('test')
-                    tcpstat[(i * 8):((i + 1) * 8)] = np.array([69, 69, 69, 69, 69, 69, 69, 69])
-                else:
-                    print('train')
-                    tcpstat[(i * 8):((i + 1) * 8)] = np.array([420, 420, 420, 420, 420, 420, 420, 420])
         return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, tcpstat))  # concatenation of stats into one stat vector
 
     def getNetStatHeaders(self):

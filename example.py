@@ -2,9 +2,11 @@ import csv
 import math
 import os
 import pickle
+import re
 from math import floor
 
 import numpy as np
+import pandas as pd
 from scapy.utils import rdpcap
 from random import sample
 import matplotlib.pyplot as plt
@@ -131,8 +133,9 @@ def kitTester(day, attack_type, newFeatures=False):
             print(f"Directory 'pickles/{newFeatures}' created successfully.")
         else:
             print(f"Directory 'pickles/{newFeatures}' already exists.")
-
-        shit_we_have_to_train_kitsune_again('input_data/attack_types/monday_sample_medium_15.pcap.tsv', newFeatures)
+        print(day)
+        print(attack_type)
+        oops_we_have_to_train_kitsune_again('input_data/attack_types/monday_sample_medium_15.pcap.tsv', newFeatures)
     if newFeatures:
         results = kitplugin.run_trained_kitsune_from_feature_csv(
             f"input_data/{newFeatures}/attack_types/{day}_features_{attack_type}.csv", 0, np.Inf, kit_path=f"pickles/{newFeatures}/anomDetector.pkl")
@@ -174,10 +177,10 @@ def kitTester(day, attack_type, newFeatures=False):
         path = f'pickles/output_pickles_conv_basis/{day.title()}_{attack_type}_maxConvs.pkl'
     with open(path, 'wb') as f:
         pickle.dump(maxConvs, f)
+    with open(path, 'rb') as f:
+        test = pickle.load(f)
+    print(test)
     return maxConvs
-
-#kitplugin = KitPlugin(input_path="input_data/Monday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-#kitplugin.feature_builder("input_data/attack_types/monday_features.csv")
 
 def plot_attack_boxplots(data_for_attack_types, include_outliers=True, log_scale=False):
     attack_types = list(data_for_attack_types.keys())
@@ -271,7 +274,9 @@ def create_attack_barchart_excel(data_for_attack_types):
     wb.save("attack_barchart.xlsx")
 
 
-def shit_we_have_to_train_kitsune_again(path, newFeatures):
+def oops_we_have_to_train_kitsune_again(path, newFeatures):
+    # if os.path.isfile(f"pickles/{newFeatures}/anomDetector.pkl"):
+    #     return True
     newKitsOnTheBlock = Kitsune(path, np.Inf, 25, 23940, 239400, 0.00001, 0.25)
     for i in range(0, 239400):
         if i % 20000 == 0:
@@ -281,12 +286,7 @@ def shit_we_have_to_train_kitsune_again(path, newFeatures):
     with open(f"pickles/{newFeatures}/anomDetector.pkl", 'wb') as f:
         pickle.dump(newkitnet, f)
 
-attacks1 = ["benign - small", "FTP-Patator - Attempted", "FTP-Patator", "SSH-Patator - Attempted", "SSH-Patator"]
 
-convs = []
-for attack in attacks1:
-    print(attack)
-    convs.append(kitTester("tuesday", attack, newFeatures="base"))
 
 # attacks2 = ["benign - small", "FTP-Patator", "FTP-Patator - Attempted", "SSH-Patator", "SSH-Patator - Attempted"]
 # for attack in attacks2:
@@ -316,7 +316,29 @@ for attack in attacks1:
 # kitplugin.most_significant_packets_sampler("tuesday", 0.2667368034640465)
 #results = kitplugin.shap_documenter("wednesday")
 
-# with open(f"input_data/Wednesday-WorkingHours.pcap.tsv", newline='') as csvfile:
+# print('fri')
+# with open(f"input_data/attack_types/friday_features_added.csv", newline='') as csvfile:
+#     csv_reader = csv.reader(csvfile)
+#     line_count = sum(1 for row in csv_reader)
+# print(f"features: {line_count}")
+# with open(f"input_data/Friday-WorkingHours.pcap.tsv", newline='') as csvfile:
 #     csv_reader = csv.reader(csvfile)
 #     line_count = sum(1 for row in csv_reader)
 # print(f"PCAP: {line_count}")
+# quit()
+
+kitplugin = KitPlugin(input_path="input_data/Wednesday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
+kitplugin.feature_builder("input_data/attack_types/wednesday_features_added.csv")
+print('wednesday done')
+quit()
+
+attacks1 = ["benign - small", "Infiltration - Attempted", "Infiltration", "Web Attack - SQL Injection", "Web Attack - SQL Injection - Attempted", "Web Attack - XSS - Attempted", "Web Attack - XSS"]
+#attacks1 = ["benign - small", "SSH-Patator - Attempted", "SSH-Patator", "FTP-Patator", "FTP-Patator - Attempted"]
+#attacks1 = ["benign - small"]
+convs = []
+import time
+for attack in attacks1:
+    oldtime = time.time()
+    convs.append(kitTester("thursday", attack, newFeatures="qd"))
+    newtime = time.time()
+    print(f"Total duration of code execution: {newtime-oldtime} seconds")

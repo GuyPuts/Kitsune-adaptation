@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 ## Prep AfterImage cython package
 import os
@@ -70,7 +72,7 @@ class netStat:
 
         return src_subnet, dst_subnet
 
-    def updateGetStats(self, IPtype, srcMAC,dstMAC, srcIP, srcProtocol, dstIP, dstProtocol, datagramSize, timestamp, tcpFlags=False, payload = 0, ftp=False, ssh=False):
+    def updateGetStats(self, IPtype, srcMAC,dstMAC, srcIP, srcProtocol, dstIP, dstProtocol, datagramSize, timestamp, tcpFlags=False, payload = 0, ftp=False, ssh=False, sqlinj=False, xss=False, median=False, minmax=False):
         # Host BW: Stats on the srcIP's general Sender Statistics
         # Hstat = np.zeros((3*len(self.Lambdas,)))
         # for i in range(len(self.Lambdas)):
@@ -78,9 +80,15 @@ class netStat:
 
 
         #MAC.IP: Stats on src MAC-IP relationships
-        MIstat =  np.zeros((3*len(self.Lambdas,)))
-        for i in range(len(self.Lambdas)):
-            MIstat[(i*3):((i+1)*3)] = self.HT_MI.update_get_1D_Stats(srcMAC+srcIP, timestamp, datagramSize, self.Lambdas[i])
+        if median:
+            MIstat =  np.zeros(4*len(self.Lambdas,))
+            for i in range(len(self.Lambdas)):
+                MIstat[(i*4):((i+1)*4)] = self.HT_MI.update_get_1D_Stats(srcMAC+srcIP, timestamp, datagramSize, self.Lambdas[i], median=True)
+        else:
+            MIstat = np.zeros((3 * len(self.Lambdas, )))
+            for i in range(len(self.Lambdas)):
+                MIstat[(i * 3):((i + 1) * 3)] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                                               self.Lambdas[i])
 
         # Host-Host BW: Stats on the dual traffic behavior between srcIP and dstIP
         HHstat =  np.zeros((7*len(self.Lambdas,)))
@@ -101,22 +109,63 @@ class netStat:
             for i in range(len(self.Lambdas)):
                 HpHpstat[(i*7):((i+1)*7)] = self.HT_Hp.update_get_1D2D_Stats(srcIP + srcProtocol, dstIP + dstProtocol, timestamp, datagramSize, self.Lambdas[i])
 
+        if not tcpFlags:
+            tcpstat = np.zeros(8)
         if tcpFlags and tcpFlags == "":
-            return np.zeroes(8*len(self.Lambdas))
-        if tcpFlags and tcpFlags != "" and not ssh:
+            tcpstat = np.zeros(8)
+        if tcpFlags and tcpFlags != "":
             # MAC.IP: Stats on src MAC-IP relationships
-            tcpstat = np.zeros((8 * len(self.Lambdas, )))
-            for i in range(len(self.Lambdas)):
-                tcpstat[(i*8):((i+1)*8)] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize, self.Lambdas[i], tcpFlags=tcpFlags)
+            tcpstat = np.zeros(8)
+            tcpstat[0:9] = self.HT_MI.update_get_1D_Stats(srcIP+dstIP, timestamp, datagramSize, self.Lambdas[i], tcpFlags=tcpFlags)
+
         ftpstat = np.zeros(1)
-        if ftp and dstProtocol == '21':
+        ftpPorts = ['21']
+        if ftp and dstProtocol in ftpPorts:
             ftpstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
                                                         self.Lambdas[i], ftp=True)
         sshstat = np.zeros(1)
-        if ssh and dstProtocol == '22':
+        sshPorts = ['22']
+        if ssh and dstProtocol in sshPorts:
             sshstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
                                                         self.Lambdas[i], tcpFlags=tcpFlags, ssh=True)
-        return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, ftpstat))  # concatenation of stats into one stat vector
+        sqlinjstat = np.zeros(1)
+        if sqlinj:
+            # Check if the test string matches the regex pattern
+            pattern_str = r'\w*%27((%61|a|%41)(%6E|n|%4E)(%64|d|%44))|((%75|u|%55)(%6E|n|%4E)(%69|i|%49)(%6F|o|%4F)(%6E|n|%4E))|((%73|s|%53)(%65|e|%45)(%6C|l|%4C)(%65|e|%45)(%63|c|%43)(%74|t|%54))'
+            pattern = re.compile(pattern_str, re.IGNORECASE)
+            match = pattern.search(sqlinj)
+            if match:
+                sqlinjstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                            self.Lambdas[i], sqlinj=1.0)
+            else:
+                sqlinjstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                               self.Lambdas[i], sqlinj=0.1)
+        else:
+            sqlinjstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                           self.Lambdas[i], sqlinj=0.1)
+        xssstat = np.zeros(1)
+        if xss:
+            # Check if the test string matches the regex pattern
+            pattern_str = r'\s*(?:%3C|<)\s*(?:%73|s|%53)\s*(?:%63|c|%43)\s*(?:%72|r|%52)\s*(?:%69|i|%49)\s*(?:%70|p|%50)\s*(?:%74|t|%54)|console\.log'
+
+            pattern = re.compile(pattern_str, re.IGNORECASE)
+            match = pattern.search(xss)
+            if match:
+                xssstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                               self.Lambdas[i], xss=1.0)
+            else:
+                xssstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                               self.Lambdas[i], xss=0.1)
+        else:
+            xssstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                           self.Lambdas[i], xss=0.1)
+        minmaxstat = np.zeros(1)
+        if minmax:
+            minmaxstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                           self.Lambdas[i], minmax=True)
+
+        return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, tcpstat, ftpstat, sshstat, sqlinjstat, xssstat, minmaxstat))  # concatenation of stats into one stat vector
+        #return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat))  # concatenation of stats into one stat vector
 
     def getNetStatHeaders(self):
         MIstat_headers = []

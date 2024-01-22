@@ -810,7 +810,8 @@ class KitPlugin:
             for row in csvreader:
                 if row:
                     #packet_index = int(row[19])  # Assuming index is in the 20th column
-                    packet_index = int(row[22])  # Assuming index is in the 23rd column
+                    print(row)
+                    packet_index = int(row[-3])  # Assuming index is in the 23rd column
                     print(packet_index)
                     subset_indices.add(packet_index)
                 row_index += 1

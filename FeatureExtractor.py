@@ -106,7 +106,7 @@ class FE:
             self.limit = len(self.scapyin)
             print("Loaded " + str(len(self.scapyin)) + " Packets.")
 
-    def get_next_vector(self, single=False, extra=False):
+    def get_next_vector(self, single=False, extra=False, sqlinj=False):
         if self.curPacketIndx == self.limit:
             if self.parse_type == 'tsv':
                 self.tsvinf.close()
@@ -199,12 +199,13 @@ class FE:
             return []
 
         self.curPacketIndx = self.curPacketIndx + 1
-
+        if row[23] and row[23] != "":
+            sqlinj = row[23]
         ### Extract Features
         try:
             return self.nstat.updateGetStats(IPtype, srcMAC, dstMAC, srcIP, srcproto, dstIP, dstproto,
-                                                 int(framelen),
-                                                 float(timestamp), tcpFlags, payload, ftp=True)
+                                                int(framelen),
+                                                float(timestamp), tcpFlags=tcpFlags, payload = 0, ftp=True, ssh=True, sqlinj=sqlinj, xss=sqlinj, median=True, minmax=True)
         except Exception as e:
             print(e)
             return []
@@ -218,7 +219,7 @@ class FE:
         print("tshark parsing complete. File saved as: "+self.path +".tsv")
 
     def get_num_features(self):
-        return 100
+        return 118
         return len(self.nstat.getNetStatHeaders())
     
     def get_all_vectors(self, csv_path=False, single=False, extra=False):

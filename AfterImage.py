@@ -1,3 +1,4 @@
+import heapq
 import math
 from collections import deque
 from datetime import timedelta
@@ -17,6 +18,7 @@ class incStat:
         self.cur_mean = np.nan
         self.cur_var = np.nan
         self.cur_std = np.nan
+        self.decay = 1.0
         self.covs = [] # a list of incStat_covs (references) with relate to this incStat
         self.tcpPkts = 0
         self.flag_counts = {
@@ -29,6 +31,8 @@ class incStat:
             "ECE": 0,
             "CWR": 0
         }
+        self.sqlinj_sentinel = 0.0
+        self.xss_sentinel = 0.0
         self.ftp_threshold_size = 100
         self.ftp_threshold_packets = 5
         self.ftp_time_window = timedelta(minutes=5)
@@ -37,8 +41,13 @@ class incStat:
         self.ssh_threshold_syn = 4
         self.ssh_time_window = timedelta(minutes=5)
         self.ssh_syn_flags = deque()
+        self.width = 100
+        self.depth = 5
+        self.counters = [[0] * self.width for _ in range(self.depth)]
+        self.min = False
+        self.max = False
 
-    def insert(self, v, t=0, tcpFlags=False, ftp=False, ssh=False):  # v is a scalar, t is v's arrival the timestamp
+    def insert(self, v, t=0, tcpFlags=False, ftp=False, ssh=False, sqlinj=False, xss=False, median=False, minmax=False):  # v is a scalar, t is v's arrival the timestamp
         if tcpFlags:
             flag_int = int(tcpFlags, 16)  # Convert hex string to integer
             flags = ["FIN", "SYN", "RST", "PSH", "ACK", "URG", "ECE", "CWR"]
@@ -47,7 +56,14 @@ class incStat:
                     self.tcpPkts += 1
                     self.flag_counts[flag] += 1
             return True
-
+        if sqlinj:
+            if sqlinj == 1.0:
+                self.sqlinj_sentinel += 1.0
+            return True
+        if xss:
+            if xss == 1.0:
+                self.xss_sentinel += 1.0
+            return True
         if ftp:
             self.ftp_packets.append((t, v))
             self.ftp_recent_packets.append((t, v))
@@ -67,6 +83,18 @@ class incStat:
 
                 while self.ssh_syn_flags and t - self.ssh_syn_flags[0][0] > self.ssh_time_window:
                     self.ssh_syn_flags.popleft()
+            return True
+
+        if minmax:
+            if not self.min:
+                self.min = v
+            if not self.max:
+                self.max = v
+            if v < self.min:
+                self.min = v
+            if v > self.max:
+                self.max = v
+            return True
 
         if self.isTypeDiff:
             dif = t - self.lastTimestamp
@@ -88,12 +116,18 @@ class incStat:
         for cov in self.covs:
             cov.update_cov(self.ID, v, t)
 
+        if median:
+            for i in range(self.depth):
+                hash_val = hash((i, v)) % self.width
+                self.counters[i][hash_val] += 1
+
     def processDecay(self, timestamp):
         factor=1
         # check for decay
         timeDiff = timestamp - self.lastTimestamp
         if timeDiff > 0:
             factor = math.pow(2, (-self.Lambda * timeDiff))
+            self.decay = factor
             self.CF1 = self.CF1 * factor
             self.CF2 = self.CF2 * factor
             self.w = self.w * factor
@@ -149,7 +183,7 @@ class incStat:
         return math.sqrt(A)
 
     #calculates and pulls all stats on this stream
-    def allstats_1D(self, tcpFlags=False, ftp=False, ssh=False):
+    def allstats_1D(self, tcpFlags=False, ftp=False, ssh=False, sqlinj=False, xss=False, median=False, minmax=False):
         self.cur_mean = self.CF1 / self.w
         self.cur_var = abs(self.CF2 / self.w - math.pow(self.cur_mean, 2))
         # Return mean of tcp flags
@@ -164,7 +198,26 @@ class incStat:
             return float(count > self.ftp_threshold_packets)
         elif ssh:
             count_syn_flags = sum(1 for _, flag in self.ssh_syn_flags if flag)
-            return count_syn_flags > self.ssh_threshold_syn
+            return float(count_syn_flags > self.ssh_threshold_syn)
+        elif sqlinj:
+            return self.sqlinj_sentinel
+        elif xss:
+            return self.xss_sentinel
+        elif minmax:
+            minmax = abs(self.max - self.min)
+            return minmax
+        elif median:
+            heap = []
+            for i in range(self.width):
+                freq = 0
+                for j in range(self.depth):
+                    freq += self.counters[j][i]
+                freq *= self.decay ** i  # Apply decay
+                heapq.heappush(heap, freq)
+
+            median_idx = len(heap) // 2
+            median = heapq.nsmallest(median_idx + 1, heap)[-1]
+            return [self.w, self.cur_mean, self.cur_var, median]
         return [self.w, self.cur_mean, self.cur_var]
 
     #calculates and pulls all stats on this stream, and stats shared with the indicated stream
@@ -361,16 +414,24 @@ class incStatDB:
         return inc_cov
 
     # updates/registers stream
-    def update(self,ID,t,v,Lambda=1,isTypeDiff=False,tcpFlags=False,ftp=False,ssh=False):
-        if tcpFlags:
+    def update(self,ID,t,v,Lambda=1,isTypeDiff=False,tcpFlags=False,ftp=False,ssh=False,sqlinj=False,xss=False,median=False,minmax=False):
+        if median:
+            incS = self.register(f"median_{ID}",Lambda,t,isTypeDiff)
+        elif tcpFlags:
             incS = self.register(f"tcp_{ID}",Lambda,t,isTypeDiff)
         elif ftp:
             incS = self.register(f"ftp_{ID}", Lambda, t, isTypeDiff)
         elif ssh:
             incS = self.register(f"ssh_{ID}", Lambda, t, isTypeDiff)
+        elif sqlinj:
+            incS = self.register(f"sqlinj_{ID}", Lambda, t, isTypeDiff)
+        elif xss:
+            incS = self.register(f"xss_{ID}", Lambda, t, isTypeDiff)
+        elif minmax:
+            incS = self.register(f"minmax_{ID}", Lambda, t, isTypeDiff)
         else:
             incS = self.register(ID, Lambda, t, isTypeDiff)
-        incS.insert(v,t,tcpFlags=tcpFlags,ftp=ftp)
+        incS.insert(v,t,tcpFlags=tcpFlags,ftp=ftp,ssh=ssh,sqlinj=sqlinj,xss=xss,median=median,minmax=minmax)
         return incS
 
     # Pulls current stats from the given ID
@@ -439,9 +500,9 @@ class incStatDB:
         return [np.sqrt(rad),np.sqrt(mag)]
 
     # Updates and then pulls current 1D stats from the given ID. Automatically registers previously unknown stream IDs
-    def update_get_1D_Stats(self, ID,t,v,Lambda=1,isTypeDiff=False, tcpFlags=False, ftp=False, ssh=False):  # weight, mean, std
-        incS = self.update(ID,t,v,Lambda,isTypeDiff, tcpFlags=tcpFlags, ftp=ftp, ssh=ssh)
-        stats = incS.allstats_1D(tcpFlags, ftp, ssh)
+    def update_get_1D_Stats(self, ID,t,v,Lambda=1,isTypeDiff=False, tcpFlags=False, ftp=False, ssh=False, sqlinj=False, xss=False, median=False, minmax=False):  # weight, mean, std
+        incS = self.update(ID,t,v,Lambda,isTypeDiff, tcpFlags=tcpFlags, ftp=ftp, ssh=ssh, sqlinj=sqlinj, xss=xss, median=median, minmax=minmax)
+        stats = incS.allstats_1D(tcpFlags, ftp, ssh, sqlinj, xss, median, minmax)
         return stats
 
 

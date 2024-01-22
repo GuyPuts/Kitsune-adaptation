@@ -59,7 +59,6 @@ class KitNET:
     #force train KitNET on x
     #returns the anomaly score of x during training (do not use for alerting)
     def train(self,x):
-        print(x[-1])
         train_val = 0.0
         if self.n_trained <= self.FM_grace_period and self.v is None: #If the FM is in train-mode, and the user has not supplied a feature mapping
             #update the incremetnal correlation matrix
@@ -85,7 +84,6 @@ class KitNET:
 
     #force execute KitNET on x
     def execute(self,x):
-        print(x[-1])
         if self.v is None:
             raise RuntimeError('KitNET Cannot execute x, because a feature mapping has not yet been learned or provided. Try running process(x) instead.')
         else:

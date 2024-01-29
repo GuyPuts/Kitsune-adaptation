@@ -110,13 +110,13 @@ class netStat:
                 HpHpstat[(i*7):((i+1)*7)] = self.HT_Hp.update_get_1D2D_Stats(srcIP + srcProtocol, dstIP + dstProtocol, timestamp, datagramSize, self.Lambdas[i])
 
         if not tcpFlags:
-            tcpstat = np.zeros(8)
+            tcpstat = np.zeros(40)
         if tcpFlags and tcpFlags == "":
-            tcpstat = np.zeros(8)
+            tcpstat = np.zeros(40)
         if tcpFlags and tcpFlags != "":
-            # MAC.IP: Stats on src MAC-IP relationships
-            tcpstat = np.zeros(8)
-            tcpstat[0:9] = self.HT_MI.update_get_1D_Stats(srcIP+dstIP, timestamp, datagramSize, self.Lambdas[i], tcpFlags=tcpFlags)
+            tcpstat = np.zeros(40)
+            for i in range(len(self.Lambdas)):
+                tcpstat[(i * 8):((i + 1) * 8)] = self.HT_MI.update_get_1D_Stats(srcIP+dstIP, timestamp, datagramSize, self.Lambdas[i], tcpFlags=tcpFlags)
 
         ftpstat = np.zeros(1)
         ftpPorts = ['21']
@@ -128,37 +128,71 @@ class netStat:
         if ssh and dstProtocol in sshPorts:
             sshstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
                                                         self.Lambdas[i], tcpFlags=tcpFlags, ssh=True)
-        sqlinjstat = np.zeros(1)
+        sqlinjstat = np.zeros(3)
         if sqlinj:
             # Check if the test string matches the regex pattern
-            pattern_str = r'\w*%27((%61|a|%41)(%6E|n|%4E)(%64|d|%44))|((%75|u|%55)(%6E|n|%4E)(%69|i|%49)(%6F|o|%4F)(%6E|n|%4E))|((%73|s|%53)(%65|e|%45)(%6C|l|%4C)(%65|e|%45)(%63|c|%43)(%74|t|%54))'
+            pattern_str = r'\w*%27(%61|a|%41)(%6E|n|%4E)(%64|d|%44)'
             pattern = re.compile(pattern_str, re.IGNORECASE)
             match = pattern.search(sqlinj)
             if match:
                 sqlinjstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
-                                                            self.Lambdas[i], sqlinj=1.0)
+                                                            self.Lambdas[i], sqlinj=1.0, sqltype='and')
             else:
                 sqlinjstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
-                                                               self.Lambdas[i], sqlinj=0.1)
+                                                               self.Lambdas[i], sqlinj=0.1, sqltype='and')
+            pattern_str = r'\w*%27(%75|u|%55)(%6E|n|%4E)(%69|i|%49)(%6F|o|%4F)(%6E|n|%4E)'
+            pattern = re.compile(pattern_str, re.IGNORECASE)
+            match = pattern.search(sqlinj)
+            if match:
+                sqlinjstat[1] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                               self.Lambdas[i], sqlinj=1.0, sqltype='union')
+            else:
+                sqlinjstat[1] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                               self.Lambdas[i], sqlinj=0.1, sqltype='union')
+            pattern_str = r'\w*%27(%73|s|%53)(%65|e|%45)(%6C|l|%4C)(%65|e|%45)(%63|c|%43)(%74|t|%54)'
+            pattern = re.compile(pattern_str, re.IGNORECASE)
+            match = pattern.search(sqlinj)
+            if match:
+                sqlinjstat[2] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                               self.Lambdas[i], sqlinj=1.0, sqltype='select')
+            else:
+                sqlinjstat[2] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                               self.Lambdas[i], sqlinj=0.1, sqltype='select')
         else:
             sqlinjstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
-                                                           self.Lambdas[i], sqlinj=0.1)
-        xssstat = np.zeros(1)
+                                                           self.Lambdas[i], sqlinj=0.1, sqltype='and')
+            sqlinjstat[1] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                           self.Lambdas[i], sqlinj=0.1, sqltype='union')
+            sqlinjstat[2] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                           self.Lambdas[i], sqlinj=0.1, sqltype='select')
+        xssstat = np.zeros(2)
         if xss:
             # Check if the test string matches the regex pattern
-            pattern_str = r'\s*(?:%3C|<)\s*(?:%73|s|%53)\s*(?:%63|c|%43)\s*(?:%72|r|%52)\s*(?:%69|i|%49)\s*(?:%70|p|%50)\s*(?:%74|t|%54)|console\.log'
+            pattern_str = r'\s*(?:%3C|<)\s*(?:%73|s|%53)\s*(?:%63|c|%43)\s*(?:%72|r|%52)\s*(?:%69|i|%49)\s*(?:%70|p|%50)\s*(?:%74|t|%54)'
 
             pattern = re.compile(pattern_str, re.IGNORECASE)
             match = pattern.search(xss)
             if match:
                 xssstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
-                                                               self.Lambdas[i], xss=1.0)
+                                                               self.Lambdas[i], xss=1.0, xsstype='script')
             else:
                 xssstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
-                                                               self.Lambdas[i], xss=0.1)
+                                                               self.Lambdas[i], xss=0.1, xsstype='script')
+            pattern_str = r'\s*console\.log'
+
+            pattern = re.compile(pattern_str, re.IGNORECASE)
+            match = pattern.search(xss)
+            if match:
+                xssstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                            self.Lambdas[i], xss=1.0, xsstype='log')
+            else:
+                xssstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                            self.Lambdas[i], xss=0.1, xsstype='log')
         else:
             xssstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
-                                                           self.Lambdas[i], xss=0.1)
+                                                        self.Lambdas[i], xss=0.1, xsstype='script')
+            xssstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                           self.Lambdas[i], xss=0.1, xsstype='log')
         minmaxstat = np.zeros(1)
         if minmax:
             minmaxstat[0] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,

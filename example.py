@@ -327,18 +327,18 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
 # print(f"PCAP: {line_count}")
 # quit()
 
-kitplugin = KitPlugin(input_path="input_data/Wednesday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-kitplugin.feature_builder("input_data/attack_types/wednesday_features_added.csv")
-print('wednesday done')
-quit()
+# kitplugin = KitPlugin(input_path="input_data/Wednesday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
+# kitplugin.feature_builder("input_data/attack_types/wednesday_features_added.csv")
+# print('wednesday done')
+# quit()
 
-attacks1 = ["benign - small", "Infiltration - Attempted", "Infiltration", "Web Attack - SQL Injection", "Web Attack - SQL Injection - Attempted", "Web Attack - XSS - Attempted", "Web Attack - XSS"]
+attacks1 = ["benign - small", "Infiltration - Attempted", "Infiltration", "Web Attack - SQL Injection", "Web Attack - SQL Injection - Attempted", "Web Attack - XSS - Attempted", "Web Attack - XSS", "Web Attack - Brute Force"]
 #attacks1 = ["benign - small", "SSH-Patator - Attempted", "SSH-Patator", "FTP-Patator", "FTP-Patator - Attempted"]
 #attacks1 = ["benign - small"]
 convs = []
 import time
 for attack in attacks1:
     oldtime = time.time()
-    convs.append(kitTester("thursday", attack, newFeatures="qd"))
+    convs.append(kitTester("thursday", attack, newFeatures="newmedian"))
     newtime = time.time()
     print(f"Total duration of code execution: {newtime-oldtime} seconds")

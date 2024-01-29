@@ -204,6 +204,9 @@ class FE:
         ### Extract Features
         try:
             return self.nstat.updateGetStats(IPtype, srcMAC, dstMAC, srcIP, srcproto, dstIP, dstproto,
+                                             int(framelen),
+                                             float(timestamp), median=True)
+            return self.nstat.updateGetStats(IPtype, srcMAC, dstMAC, srcIP, srcproto, dstIP, dstproto,
                                                 int(framelen),
                                                 float(timestamp), tcpFlags=tcpFlags, payload = 0, ftp=True, ssh=True, sqlinj=sqlinj, xss=sqlinj, median=True, minmax=True)
         except Exception as e:
@@ -219,7 +222,7 @@ class FE:
         print("tshark parsing complete. File saved as: "+self.path +".tsv")
 
     def get_num_features(self):
-        return 118
+        return 153
         return len(self.nstat.getNetStatHeaders())
     
     def get_all_vectors(self, csv_path=False, single=False, extra=False):

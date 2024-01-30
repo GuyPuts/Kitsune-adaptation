@@ -2,7 +2,8 @@ import heapq
 import math
 from collections import deque
 from datetime import timedelta
-
+from random import random
+from tdigest import TDigest
 import numpy as np
 
 
@@ -31,6 +32,8 @@ class incStat:
             "ECE": 0,
             "CWR": 0
         }
+        self.tcp_time_window = timedelta(minutes=5)
+        self.tcpBuffer = []
         self.sqlinj_sentinel = 0.0
         self.xss_sentinel = 0.0
         self.ftp_threshold_size = 100
@@ -46,16 +49,9 @@ class incStat:
         self.counters = [[0] * self.width for _ in range(self.depth)]
         self.min = False
         self.max = False
+        self.tdigest = TDigest()
 
     def insert(self, v, t=0, tcpFlags=False, ftp=False, ssh=False, sqlinj=False, xss=False, median=False, minmax=False):  # v is a scalar, t is v's arrival the timestamp
-        if tcpFlags:
-            flag_int = int(tcpFlags, 16)  # Convert hex string to integer
-            flags = ["FIN", "SYN", "RST", "PSH", "ACK", "URG", "ECE", "CWR"]
-            for i, flag in enumerate(flags):
-                if flag_int & (1 << i):  # Check if the flag is set
-                    self.tcpPkts += 1
-                    self.flag_counts[flag] += 1
-            return True
         if sqlinj:
             if sqlinj == 1.0:
                 self.sqlinj_sentinel += 1.0
@@ -104,6 +100,44 @@ class incStat:
                 v = 0
         self.processDecay(t)
 
+        if tcpFlags:
+            flag_int = int(tcpFlags, 16)  # Convert hex string to integer
+            flags = ["FIN", "SYN", "RST", "PSH", "ACK", "URG", "ECE", "CWR"]
+            pkt_dict = {
+                'timestamp': t,
+                'FIN': 0,
+                'SYN': 0,
+                'RST': 0,
+                'PSH': 0,
+                'ACK': 0,
+                'URG': 0,
+                'ECE': 0,
+                'CWR': 0,
+            }
+            for i, flag in enumerate(flags):
+                if flag_int & (1 << i):  # Check if the flag is set
+                    self.tcpPkts += 1
+                    self.flag_counts[flag] += 1
+                    pkt_dict[flag] += 1
+
+            self.tcpBuffer.append(pkt_dict)
+            newbuffer = []
+            for dictionary in self.tcpBuffer:
+                if not t - dictionary["timestamp"] > self.tcp_time_window.total_seconds():
+                    newbuffer.append(dictionary)
+            self.tcpBuffer = newbuffer
+            # Process decay
+            for dictionary in self.tcpBuffer:
+                dictionary["FIN"] = dictionary["FIN"] * self.decay
+                dictionary["SYN"] = dictionary["SYN"] * self.decay
+                dictionary["RST"] = dictionary["RST"] * self.decay
+                dictionary["PSH"] = dictionary["PSH"] * self.decay
+                dictionary["ACK"] = dictionary["ACK"] * self.decay
+                dictionary["URG"] = dictionary["URG"] * self.decay
+                dictionary["ECE"] = dictionary["ECE"] * self.decay
+                dictionary["CWR"] = dictionary["CWR"] * self.decay
+            return True
+
         # update with v
         self.CF1 += v
         self.CF2 += math.pow(v, 2)
@@ -117,6 +151,7 @@ class incStat:
             cov.update_cov(self.ID, v, t)
 
         if median:
+            self.tdigest.update(v)
             for i in range(self.depth):
                 hash_val = hash((i, v)) % self.width
                 self.counters[i][hash_val] += 1
@@ -188,10 +223,21 @@ class incStat:
         self.cur_var = abs(self.CF2 / self.w - math.pow(self.cur_mean, 2))
         # Return mean of tcp flags
         if tcpFlags and not ssh:
-            if self.tcpPkts > 0:
-                flags = [flag / self.tcpPkts for flag in list(self.flag_counts.values())]
-            else:
+            # if self.tcpPkts > 0:
+            #     flags = [flag / self.tcpPkts for flag in list(self.flag_counts.values())]
+            # else:
+            #     flags = [0, 0, 0, 0, 0, 0, 0, 0]
+            if self.tcpBuffer:
                 flags = [0, 0, 0, 0, 0, 0, 0, 0]
+                for dictionary in self.tcpBuffer:
+                    flags[0] += dictionary["FIN"]
+                    flags[1] += dictionary["SYN"]
+                    flags[2] += dictionary["RST"]
+                    flags[3] += dictionary["PSH"]
+                    flags[4] += dictionary["ACK"]
+                    flags[5] += dictionary["URG"]
+                    flags[6] += dictionary["ECE"]
+                    flags[7] += dictionary["CWR"]
             return flags
         elif ftp:
             count = sum(1 for packet in self.ftp_recent_packets if packet[1] < self.ftp_threshold_size)
@@ -207,6 +253,8 @@ class incStat:
             minmax = abs(self.max - self.min)
             return minmax
         elif median:
+            median = self.tdigest.percentile(50)
+            return [self.w, self.cur_mean, self.cur_var, median]
             heap = []
             for i in range(self.width):
                 freq = 0
@@ -414,7 +462,7 @@ class incStatDB:
         return inc_cov
 
     # updates/registers stream
-    def update(self,ID,t,v,Lambda=1,isTypeDiff=False,tcpFlags=False,ftp=False,ssh=False,sqlinj=False,xss=False,median=False,minmax=False):
+    def update(self,ID,t,v,Lambda=1,isTypeDiff=False,tcpFlags=False,ftp=False,ssh=False,sqlinj=False,sqltype=False,xss=False,xsstype=False,median=False,minmax=False):
         if median:
             incS = self.register(f"median_{ID}",Lambda,t,isTypeDiff)
         elif tcpFlags:
@@ -424,9 +472,9 @@ class incStatDB:
         elif ssh:
             incS = self.register(f"ssh_{ID}", Lambda, t, isTypeDiff)
         elif sqlinj:
-            incS = self.register(f"sqlinj_{ID}", Lambda, t, isTypeDiff)
+            incS = self.register(f"sqlinj_{sqltype}_{ID}", Lambda, t, isTypeDiff)
         elif xss:
-            incS = self.register(f"xss_{ID}", Lambda, t, isTypeDiff)
+            incS = self.register(f"xss_{xsstype}_{ID}", Lambda, t, isTypeDiff)
         elif minmax:
             incS = self.register(f"minmax_{ID}", Lambda, t, isTypeDiff)
         else:
@@ -500,8 +548,8 @@ class incStatDB:
         return [np.sqrt(rad),np.sqrt(mag)]
 
     # Updates and then pulls current 1D stats from the given ID. Automatically registers previously unknown stream IDs
-    def update_get_1D_Stats(self, ID,t,v,Lambda=1,isTypeDiff=False, tcpFlags=False, ftp=False, ssh=False, sqlinj=False, xss=False, median=False, minmax=False):  # weight, mean, std
-        incS = self.update(ID,t,v,Lambda,isTypeDiff, tcpFlags=tcpFlags, ftp=ftp, ssh=ssh, sqlinj=sqlinj, xss=xss, median=median, minmax=minmax)
+    def update_get_1D_Stats(self, ID,t,v,Lambda=1,isTypeDiff=False, tcpFlags=False, ftp=False, ssh=False, sqlinj=False, sqltype=False, xss=False, xsstype=False, median=False, minmax=False):  # weight, mean, std
+        incS = self.update(ID,t,v,Lambda,isTypeDiff, tcpFlags=tcpFlags, ftp=ftp, ssh=ssh, sqlinj=sqlinj, sqltype=sqltype, xss=xss, xsstype=xsstype, median=median, minmax=minmax)
         stats = incS.allstats_1D(tcpFlags, ftp, ssh, sqlinj, xss, median, minmax)
         return stats
 

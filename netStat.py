@@ -179,56 +179,57 @@ class netStat:
         #     Hstat[(i*3):((i+1)*3)] = self.HT_H.update_get_1D_Stats(srcIP, timestamp, datagramSize, self.Lambdas[i])
 
         # MAC.IP: Stats on src MAC-IP relationships
-        MIstat = np.zeros((3 * len(self.Lambdas, )))
+        MIstat = np.zeros((4 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            MIstat[(i * 3):((i + 1) * 3)] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
-                                                                           self.Lambdas[i])
+            MIstat[(i * 4):((i + 1) * 4)] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+                                                                           self.Lambdas[i], median=True)
 
         # Host-Host BW: Stats on the dual traffic behavior between srcIP and dstIP
-        HHstat = np.zeros((7 * len(self.Lambdas, )))
+        HHstat = np.zeros((8 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            HHstat[(i * 7):((i + 1) * 7)] = self.HT_H.update_get_1D2D_Stats(srcIP, dstIP, timestamp, datagramSize,
-                                                                            self.Lambdas[i])
+            HHstat[(i * 8):((i + 1) * 8)] = self.HT_H.update_get_1D2D_Stats(srcIP, dstIP, timestamp, datagramSize,
+                                                                            self.Lambdas[i], median=True)
 
         # Host-Host Jitter:
-        HHstat_jit = np.zeros((3 * len(self.Lambdas, )))
+        HHstat_jit = np.zeros((4 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            HHstat_jit[(i * 3):((i + 1) * 3)] = self.HT_jit.update_get_1D_Stats(srcIP + dstIP, timestamp, 0,
-                                                                                self.Lambdas[i], isTypeDiff=True)
+            HHstat_jit[(i * 4):((i + 1) * 4)] = self.HT_jit.update_get_1D_Stats(srcIP + dstIP, timestamp, 0,
+                                                                                self.Lambdas[i], isTypeDiff=True, median=True)
 
         # Host-Host BW: Stats on the dual traffic behavior between srcIP and dstIP
-        HpHpstat = np.zeros((7 * len(self.Lambdas, )))
+        HpHpstat = np.zeros((8 * len(self.Lambdas, )))
         if srcProtocol == 'arp':
             for i in range(len(self.Lambdas)):
-                HpHpstat[(i * 7):((i + 1) * 7)] = self.HT_Hp.update_get_1D2D_Stats(srcMAC, dstMAC, timestamp,
-                                                                                   datagramSize, self.Lambdas[i])
+                HpHpstat[(i * 8):((i + 1) * 8)] = self.HT_Hp.update_get_1D2D_Stats(srcMAC, dstMAC, timestamp,
+                                                                                   datagramSize, self.Lambdas[i], median=True)
         else:  # some other protocol (e.g. TCP/UDP)
             for i in range(len(self.Lambdas)):
-                HpHpstat[(i * 7):((i + 1) * 7)] = self.HT_Hp.update_get_1D2D_Stats(srcIP + srcProtocol,
+                HpHpstat[(i * 8):((i + 1) * 8)] = self.HT_Hp.update_get_1D2D_Stats(srcIP + srcProtocol,
                                                                                    dstIP + dstProtocol, timestamp,
-                                                                                   datagramSize, self.Lambdas[i])
+                                                                                   datagramSize, self.Lambdas[i], median=True)
 
         # New code starts here
-        HtMiJitstat = np.zeros((3 * len(self.Lambdas, )))
+        HtMiJitstat = np.zeros((4 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            HtMiJitstat[(i * 3):((i + 1) * 3)] = self.HT_MI_jit.update_get_1D_Stats(srcIP, timestamp, datagramSize,
-                                                                           self.Lambdas[i], isTypeDiff=True)
+            HtMiJitstat[(i * 4):((i + 1) * 4)] = self.HT_MI_jit.update_get_1D_Stats(srcIP, timestamp, datagramSize,
+                                                                           self.Lambdas[i], isTypeDiff=True, median=True)
 
-        HtHpJitstat = np.zeros((3* len(self.Lambdas, )))
+        HtHpJitstat = np.zeros((4* len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            HtHpJitstat[(i * 3):((i + 1) * 3)] = self.HT_Hp_jit.update_get_1D_Stats(srcIP+srcProtocol+dstIP+dstProtocol, timestamp, datagramSize,
-                                                                           self.Lambdas[i], isTypeDiff=True)
+            HtHpJitstat[(i * 4):((i + 1) * 4)] = self.HT_Hp_jit.update_get_1D_Stats(srcIP+srcProtocol+dstIP+dstProtocol, timestamp, datagramSize,
+                                                                           self.Lambdas[i], isTypeDiff=True, median=True)
 
         # DST stats
-        DT_MIstat = np.zeros((3 * len(self.Lambdas, )))
+        DT_MIstat = np.zeros((4 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            DT_MIstat[(i * 3):((i + 1) * 3)] = self.DT_MI.update_get_1D_Stats(dstIP, timestamp, datagramSize,
-                                                                           self.Lambdas[i])
+            DT_MIstat[(i * 4):((i + 1) * 4)] = self.DT_MI.update_get_1D_Stats(dstIP, timestamp, datagramSize,
+                                                                           self.Lambdas[i], median=True)
 
-        DtMiJitstat = np.zeros((3 * len(self.Lambdas, )))
+        # DST Jitter
+        DtMiJitstat = np.zeros((4 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            DtMiJitstat[(i * 3):((i + 1) * 3)] = self.DT_MI_jit.update_get_1D_Stats(dstIP, timestamp, datagramSize,
-                                                                                    self.Lambdas[i], isTypeDiff=True)
+            DtMiJitstat[(i * 4):((i + 1) * 4)] = self.DT_MI_jit.update_get_1D_Stats(dstIP, timestamp, datagramSize,
+                                                                                    self.Lambdas[i], isTypeDiff=True, median=True)
 
         return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, HtMiJitstat, HtHpJitstat, DT_MIstat, DtMiJitstat))  # concatenation of stats into one stat vector
 

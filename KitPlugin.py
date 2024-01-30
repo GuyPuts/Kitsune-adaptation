@@ -1561,15 +1561,15 @@ class KitPlugin:
         self.workbook.save(excel_file)
 
     def train_kitsune(self):
-        with open(f"input_data/attack_types/monday_features.csv", newline='') as csvfile:
+        with open(f"input_data/attack_types/monday_features_added.csv", newline='') as csvfile:
             csv_reader = csv.reader(csvfile)
             line_count = sum(1 for row in csv_reader)
-        kit = KitNET(100, max_autoencoder_size=25, FM_grace_period=int(0.1*line_count),
+        kit = KitNET(118, max_autoencoder_size=25, FM_grace_period=int(0.1*line_count),
                      AD_grace_period=line_count, learning_rate=0.00001,
                      hidden_ratio=0.25)
         # Load the feature list beforehand to save time
         counter = 0
-        with open(f"input_data/attack_types/monday_features.csv") as fp:
+        with open(f"input_data/attack_types/monday_features_added.csv") as fp:
             rd_ft = csv.reader(fp, delimiter="\t", quotechar='"')
             train_err = []
             for packet in rd_ft:
@@ -1588,7 +1588,5 @@ class KitPlugin:
         median_absolute_deviation = np.median([abs(number - median_value) for number in train_err])
 
         threshold = median_value + 2 * median_absolute_deviation
-        print(threshold)
-        quit()
-        with open("pickles/anomDetectorFullDatasetNew.pkl", 'wb') as f:
+        with open("pickles/anomDetectorFullDataset.pkl", 'wb') as f:
             pickle.dump(kit, f)

@@ -275,8 +275,8 @@ def create_attack_barchart_excel(data_for_attack_types):
 
 
 def oops_we_have_to_train_kitsune_again(path, newFeatures):
-    # if os.path.isfile(f"pickles/{newFeatures}/anomDetector.pkl"):
-    #     return True
+    if os.path.isfile(f"pickles/{newFeatures}/anomDetector.pkl"):
+        return True
     newKitsOnTheBlock = Kitsune(path, np.Inf, 25, 23940, 239400, 0.00001, 0.25)
     for i in range(0, 239400):
         if i % 20000 == 0:
@@ -339,8 +339,10 @@ attacks1 = ["benign - small", "Infiltration - Attempted", "Infiltration", "Web A
 convs = []
 
 import time
+oldtime = time.time()
 for attack in attacks1:
-    oldtime = time.time()
-    convs.append(kitTester("thursday", attack, newFeatures='new_SRCIP_CHANN_SOCK_JIT_MED_JIT_FLAGS'))
-    newtime = time.time()
-    print(f"Total duration of code execution: {newtime-oldtime} seconds")
+    convs.append(kitTester("thursday", attack, newFeatures='new_all_features_except_quantiles'))
+newtime = time.time()
+print(f"Total duration of code execution: {newtime-oldtime} seconds")
+print(f"Started at {time.asctime(time.localtime(oldtime))}")
+print(f"Ended at {time.asctime(time.localtime(newtime))}")

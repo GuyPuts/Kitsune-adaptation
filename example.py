@@ -317,20 +317,20 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
 #results = kitplugin.shap_documenter("wednesday")
 
 # print('fri')
-# with open(f"input_data/attack_types/friday_features_added.csv", newline='') as csvfile:
+# with open(f"input_data/attack_types/monday_features_added.csv", newline='') as csvfile:
 #     csv_reader = csv.reader(csvfile)
 #     line_count = sum(1 for row in csv_reader)
 # print(f"features: {line_count}")
-# with open(f"input_data/Friday-WorkingHours.pcap.tsv", newline='') as csvfile:
+# with open(f"input_data/Monday-WorkingHours.pcap.tsv", newline='') as csvfile:
 #     csv_reader = csv.reader(csvfile)
 #     line_count = sum(1 for row in csv_reader)
 # print(f"PCAP: {line_count}")
 # quit()
 
-# kitplugin = KitPlugin(input_path="input_data/Wednesday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-# kitplugin.feature_builder("input_data/attack_types/wednesday_features_added.csv")
-# print('wednesday done')
-# quit()
+kitplugin = KitPlugin(input_path="input_data/Monday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
+kitplugin.feature_builder("input_data/attack_types/monday_features_added.csv")
+print('monday done')
+quit()
 
 attacks1 = ["benign - small", "Infiltration - Attempted", "Infiltration", "Web Attack - SQL Injection", "Web Attack - SQL Injection - Attempted", "Web Attack - XSS - Attempted", "Web Attack - XSS", "Web Attack - Brute Force"]
 #attacks1 = ["benign - small", "SSH-Patator - Attempted", "SSH-Patator", "FTP-Patator", "FTP-Patator - Attempted"]

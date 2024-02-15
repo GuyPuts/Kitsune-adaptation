@@ -966,6 +966,7 @@ class KitPlugin:
 
     # Runs a hyperparameter optimization on the supplied dataset, constrained by number of runs and packet limit
     # This version uses KitNET directly instead of running Kitsune as a whole
+    # DEPRECATED
     def hyper_opt_KitNET_mean(self, feature_path, training_cutoff, total_cutoff):
         def objective(trial):
             numAE = trial.suggest_int('numAE', 0, 200)

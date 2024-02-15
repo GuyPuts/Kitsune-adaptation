@@ -195,48 +195,48 @@ class netStat:
         #     Hstat[(i*3):((i+1)*3)] = self.HT_H.update_get_1D_Stats(srcIP, timestamp, datagramSize, self.Lambdas[i])
 
         # MAC.IP: Stats on src MAC-IP relationships
-        onedimensionalfeaturecount = 4
-        twodimensionalfeaturecount = 8
-        median=True
-        MIstat = np.zeros((onedimensionalfeaturecount * len(self.Lambdas, )))
+        onedimensionalfeaturecount = 3
+        twodimensionalfeaturecount = 7
+        median=False
+        MIstat = np.zeros((3 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            MIstat[(i * onedimensionalfeaturecount):((i + 1) * onedimensionalfeaturecount)] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
+            MIstat[(i * 3):((i + 1) * 3)] = self.HT_MI.update_get_1D_Stats(srcMAC + srcIP, timestamp, datagramSize,
                                                                            self.Lambdas[i],median=median)
 
         # Host-Host BW: Stats on the dual traffic behavior between srcIP and dstIP
-        HHstat = np.zeros((twodimensionalfeaturecount * len(self.Lambdas, )))
+        HHstat = np.zeros((7 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            HHstat[(i * twodimensionalfeaturecount):((i + 1) * twodimensionalfeaturecount)] = self.HT_H.update_get_1D2D_Stats(srcIP, dstIP, timestamp, datagramSize,
+            HHstat[(i * 7):((i + 1) * 7)] = self.HT_H.update_get_1D2D_Stats(srcIP, dstIP, timestamp, datagramSize,
                                                                             self.Lambdas[i],median=median)
 
         # Host-Host Jitter:
-        HHstat_jit = np.zeros((onedimensionalfeaturecount * len(self.Lambdas, )))
+        HHstat_jit = np.zeros((4 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            HHstat_jit[(i * onedimensionalfeaturecount):((i + 1) * onedimensionalfeaturecount)] = self.HT_jit.update_get_1D_Stats(srcIP + dstIP, timestamp, 0,
-                                                                                self.Lambdas[i], isTypeDiff=True,median=median)
+            HHstat_jit[(i * 4):((i + 1) * 4)] = self.HT_jit.update_get_1D_Stats(srcIP + dstIP, timestamp, 0,
+                                                                                self.Lambdas[i], isTypeDiff=True,median=True)
 
         # Host-Host BW: Stats on the dual traffic behavior between srcIP and dstIP
-        HpHpstat = np.zeros((twodimensionalfeaturecount * len(self.Lambdas, )))
+        HpHpstat = np.zeros((7 * len(self.Lambdas, )))
         if srcProtocol == 'arp':
             for i in range(len(self.Lambdas)):
-                HpHpstat[(i * twodimensionalfeaturecount):((i + 1) * twodimensionalfeaturecount)] = self.HT_Hp.update_get_1D2D_Stats(srcMAC, dstMAC, timestamp,
+                HpHpstat[(i * 7):((i + 1) * 7)] = self.HT_Hp.update_get_1D2D_Stats(srcMAC, dstMAC, timestamp,
                                                                                    datagramSize, self.Lambdas[i],median=median)
         else:  # some other protocol (e.g. TCP/UDP)
             for i in range(len(self.Lambdas)):
-                HpHpstat[(i * twodimensionalfeaturecount):((i + 1) * twodimensionalfeaturecount)] = self.HT_Hp.update_get_1D2D_Stats(srcIP + srcProtocol,
+                HpHpstat[(i * 7):((i + 1) * 7)] = self.HT_Hp.update_get_1D2D_Stats(srcIP + srcProtocol,
                                                                                    dstIP + dstProtocol, timestamp,
                                                                                    datagramSize, self.Lambdas[i],median=median)
 
         # New code starts here
-        HtMiJitstat = np.zeros((onedimensionalfeaturecount * len(self.Lambdas, )))
+        HtMiJitstat = np.zeros((4 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            HtMiJitstat[(i * onedimensionalfeaturecount):((i + 1) * onedimensionalfeaturecount)] = self.HT_MI_jit.update_get_1D_Stats(srcIP, timestamp, datagramSize,
-                                                                           self.Lambdas[i], isTypeDiff=True,median=median)
+            HtMiJitstat[(i * 4):((i + 1) * 4)] = self.HT_MI_jit.update_get_1D_Stats(srcIP, timestamp, datagramSize,
+                                                                           self.Lambdas[i], isTypeDiff=True,median=True)
 
-        HtHpJitstat = np.zeros((onedimensionalfeaturecount* len(self.Lambdas, )))
+        HtHpJitstat = np.zeros((4* len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            HtHpJitstat[(i * onedimensionalfeaturecount):((i + 1) * onedimensionalfeaturecount)] = self.HT_Hp_jit.update_get_1D_Stats(srcIP+srcProtocol+dstIP+dstProtocol, timestamp, datagramSize,
-                                                                           self.Lambdas[i], isTypeDiff=True,median=median)
+            HtHpJitstat[(i * 4):((i + 1) * 4)] = self.HT_Hp_jit.update_get_1D_Stats(srcIP+srcProtocol+dstIP+dstProtocol, timestamp, datagramSize,
+                                                                           self.Lambdas[i], isTypeDiff=True,median=True)
 
         # DST stats
         DT_MIstat = np.zeros((onedimensionalfeaturecount * len(self.Lambdas, )))
@@ -245,100 +245,100 @@ class netStat:
                                                                            self.Lambdas[i],median=median)
 
         # DST Jitter
-        DtMiJitstat = np.zeros((onedimensionalfeaturecount * len(self.Lambdas, )))
+        DtMiJitstat = np.zeros((4 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            DtMiJitstat[(i * onedimensionalfeaturecount):((i + 1) * onedimensionalfeaturecount)] = self.DT_MI_jit.update_get_1D_Stats(dstIP, timestamp, datagramSize,
-                                                                                    self.Lambdas[i], isTypeDiff=True,median=median)
+            DtMiJitstat[(i * 4):((i + 1) * 4)] = self.DT_MI_jit.update_get_1D_Stats(dstIP, timestamp, datagramSize,
+                                                                                    self.Lambdas[i], isTypeDiff=True,median=True)
 
         # Flag means
-        MI_flagstat_mean = np.zeros((8 * len(self.Lambdas, )))
+        MI_flagstat_mean = np.zeros((9 * len(self.Lambdas, )))
         if tcpFlags and tcpFlags != "":
             for i in range(len(self.Lambdas)):
-                MI_flagstat_mean[(i * 8):((i + 1) * 8)] = self.HT_MI_FLAG_MEAN.update_get_1D_Stats(srcIP, timestamp, datagramSize, self.Lambdas[i], tcpFlags=tcpFlags, tcpMean=True)
-        H_flagstat_mean = np.zeros((8 * len(self.Lambdas, )))
+                MI_flagstat_mean[(i * 9):((i + 1) * 9)] = self.HT_MI_FLAG_MEAN.update_get_1D_Stats(srcIP, timestamp, datagramSize, self.Lambdas[i], tcpFlags=tcpFlags, tcpMean=True)
+        H_flagstat_mean = np.zeros((9 * len(self.Lambdas, )))
         if tcpFlags and tcpFlags != "":
             for i in range(len(self.Lambdas)):
-                H_flagstat_mean[(i * 8):((i + 1) * 8)] = self.HT_H_FLAG_MEAN.update_get_1D_Stats(srcIP+dstIP, timestamp, datagramSize,
+                H_flagstat_mean[(i * 9):((i + 1) * 9)] = self.HT_H_FLAG_MEAN.update_get_1D_Stats(srcIP+dstIP, timestamp, datagramSize,
                                                                                          self.Lambdas[i], tcpFlags=tcpFlags, tcpMean=True)
-        HT_Hp_flagstat_mean = np.zeros((8 * len(self.Lambdas, )))
+        HT_Hp_flagstat_mean = np.zeros((9 * len(self.Lambdas, )))
         if tcpFlags and tcpFlags != "":
             for i in range(len(self.Lambdas)):
-                HT_Hp_flagstat_mean[(i * 8):((i + 1) * 8)] = self.HT_Hp_FLAG_MEAN.update_get_1D_Stats(srcIP+srcProtocol+dstIP+dstProtocol, timestamp, datagramSize,
+                HT_Hp_flagstat_mean[(i * 9):((i + 1) * 9)] = self.HT_Hp_FLAG_MEAN.update_get_1D_Stats(srcIP+srcProtocol+dstIP+dstProtocol, timestamp, datagramSize,
                                                                                          self.Lambdas[i], tcpFlags=tcpFlags, tcpMean=True)
-        DT_MI_flagstat_mean = np.zeros((8 * len(self.Lambdas, )))
+        DT_MI_flagstat_mean = np.zeros((9 * len(self.Lambdas, )))
         if tcpFlags and tcpFlags != "":
             for i in range(len(self.Lambdas)):
-                DT_MI_flagstat_mean[(i * 8):((i + 1) * 8)] = self.DT_MI_FLAG_MEAN.update_get_1D_Stats(dstIP, timestamp, datagramSize,
+                DT_MI_flagstat_mean[(i * 9):((i + 1) * 9)] = self.DT_MI_FLAG_MEAN.update_get_1D_Stats(dstIP, timestamp, datagramSize,
                                                                                             self.Lambdas[i],
                                                                                             tcpFlags=tcpFlags, tcpMean=True)
-        # Flag counts
-        MI_flagstat_count = np.zeros((8 * len(self.Lambdas, )))
-        if tcpFlags and tcpFlags != "":
-            for i in range(len(self.Lambdas)):
-                MI_flagstat_count[(i * 8):((i + 1) * 8)] = self.HT_MI_FLAG_COUNT.update_get_1D_Stats(srcIP, timestamp,
-                                                                                                   datagramSize,
-                                                                                                   self.Lambdas[i],
-                                                                                                   tcpFlags=tcpFlags,
-                                                                                                   tcpMean=False)
-        H_flagstat_count = np.zeros((8 * len(self.Lambdas, )))
-        if tcpFlags and tcpFlags != "":
-            for i in range(len(self.Lambdas)):
-                H_flagstat_count[(i * 8):((i + 1) * 8)] = self.HT_H_FLAG_COUNT.update_get_1D_Stats(srcIP + dstIP,
-                                                                                                 timestamp,
-                                                                                                 datagramSize,
-                                                                                                 self.Lambdas[i],
-                                                                                                 tcpFlags=tcpFlags,
-                                                                                                 tcpMean=False)
-        HT_Hp_flagstat_count = np.zeros((8 * len(self.Lambdas, )))
-        if tcpFlags and tcpFlags != "":
-            for i in range(len(self.Lambdas)):
-                HT_Hp_flagstat_count[(i * 8):((i + 1) * 8)] = self.HT_Hp_FLAG_COUNT.update_get_1D_Stats(
-                    srcIP + srcProtocol + dstIP + dstProtocol, timestamp, datagramSize,
-                    self.Lambdas[i], tcpFlags=tcpFlags, tcpMean=False)
-        DT_MI_flagstat_count = np.zeros((8 * len(self.Lambdas, )))
-        if tcpFlags and tcpFlags != "":
-            for i in range(len(self.Lambdas)):
-                DT_MI_flagstat_count[(i * 8):((i + 1) * 8)] = self.DT_MI_FLAG_COUNT.update_get_1D_Stats(dstIP, timestamp,
-                                                                                                      datagramSize,
-                                                                                                      self.Lambdas[i],
-                                                                                                      tcpFlags=tcpFlags,
-                                                                                                      tcpMean=False)
+        # # Flag counts
+        # MI_flagstat_count = np.zeros((8 * len(self.Lambdas, )))
+        # if tcpFlags and tcpFlags != "":
+        #     for i in range(len(self.Lambdas)):
+        #         MI_flagstat_count[(i * 8):((i + 1) * 8)] = self.HT_MI_FLAG_COUNT.update_get_1D_Stats(srcIP, timestamp,
+        #                                                                                            datagramSize,
+        #                                                                                            self.Lambdas[i],
+        #                                                                                            tcpFlags=tcpFlags,
+        #                                                                                            tcpMean=False)
+        # H_flagstat_count = np.zeros((8 * len(self.Lambdas, )))
+        # if tcpFlags and tcpFlags != "":
+        #     for i in range(len(self.Lambdas)):
+        #         H_flagstat_count[(i * 8):((i + 1) * 8)] = self.HT_H_FLAG_COUNT.update_get_1D_Stats(srcIP + dstIP,
+        #                                                                                          timestamp,
+        #                                                                                          datagramSize,
+        #                                                                                          self.Lambdas[i],
+        #                                                                                          tcpFlags=tcpFlags,
+        #                                                                                          tcpMean=False)
+        # HT_Hp_flagstat_count = np.zeros((8 * len(self.Lambdas, )))
+        # if tcpFlags and tcpFlags != "":
+        #     for i in range(len(self.Lambdas)):
+        #         HT_Hp_flagstat_count[(i * 8):((i + 1) * 8)] = self.HT_Hp_FLAG_COUNT.update_get_1D_Stats(
+        #             srcIP + srcProtocol + dstIP + dstProtocol, timestamp, datagramSize,
+        #             self.Lambdas[i], tcpFlags=tcpFlags, tcpMean=False)
+        # DT_MI_flagstat_count = np.zeros((8 * len(self.Lambdas, )))
+        # if tcpFlags and tcpFlags != "":
+        #     for i in range(len(self.Lambdas)):
+        #         DT_MI_flagstat_count[(i * 8):((i + 1) * 8)] = self.DT_MI_FLAG_COUNT.update_get_1D_Stats(dstIP, timestamp,
+        #                                                                                               datagramSize,
+        #                                                                                               self.Lambdas[i],
+        #                                                                                               tcpFlags=tcpFlags,
+        #                                                                                               tcpMean=False)
 
         # Quantiles
         # MAC.IP: Stats on src MAC-IP relationships
-        MI_quanstat = np.zeros((2 * len(self.Lambdas, )))
+        MI_quanstat = np.zeros((3 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            MI_quanstat[(i * 2):((i + 1) * 2)] = self.HT_MI_QUANT.update_get_1D_Stats(srcMAC + srcIP, timestamp,
+            MI_quanstat[(i * 3):((i + 1) * 3)] = self.HT_MI_QUANT.update_get_1D_Stats(srcMAC + srcIP, timestamp,
                                                                            datagramSize,
-                                                                           self.Lambdas[i], quantiles=[25, 75])
+                                                                           self.Lambdas[i], quantiles=[25, 50, 75])
 
         # Host-Host BW: Stats on the dual traffic behavior between srcIP and dstIP
-        HH_quanstat = np.zeros((2 * len(self.Lambdas, )))
+        HH_quanstat = np.zeros((3 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            HH_quanstat[(i * 2):((i + 1) * 2)] = self.HT_H_QUANT.update_get_1D2D_Stats(srcIP, dstIP, timestamp,
+            HH_quanstat[(i * 3):((i + 1) * 3)] = self.HT_H_QUANT.update_get_1D2D_Stats(srcIP, dstIP, timestamp,
                                                                             datagramSize,
-                                                                            self.Lambdas[i], quantiles=[25, 75])
+                                                                            self.Lambdas[i], quantiles=[25, 50, 75])
 
         # Host-Host BW: Stats on the dual traffic behavior between srcIP and dstIP
-        HpHp_quanstat = np.zeros((2 * len(self.Lambdas, )))
+        HpHp_quanstat = np.zeros((3 * len(self.Lambdas, )))
         if srcProtocol == 'arp':
             for i in range(len(self.Lambdas)):
-                HpHp_quanstat[(i * 2):((i + 1) * 2)] = self.HT_Hp_QUANT.update_get_1D2D_Stats(srcMAC, dstMAC, timestamp,
+                HpHp_quanstat[(i * 3):((i + 1) * 3)] = self.HT_Hp_QUANT.update_get_1D2D_Stats(srcMAC, dstMAC, timestamp,
                                                                                    datagramSize, self.Lambdas[i],
-                                                                                   quantiles=[25, 75])
+                                                                                   quantiles=[25, 50, 75])
         else:  # some other protocol (e.g. TCP/UDP)
             for i in range(len(self.Lambdas)):
-                HpHp_quanstat[(i * 2):((i + 1) * 2)] = self.HT_Hp_QUANT.update_get_1D2D_Stats(srcIP + srcProtocol,
+                HpHp_quanstat[(i * 3):((i + 1) * 3)] = self.HT_Hp_QUANT.update_get_1D2D_Stats(srcIP + srcProtocol,
                                                                                    dstIP + dstProtocol, timestamp,
                                                                                    datagramSize, self.Lambdas[i],
-                                                                                   quantiles=[25, 75])
+                                                                                   quantiles=[25, 50, 75])
         # DST stats
-        DT_MI_quanstat = np.zeros((2 * len(self.Lambdas, )))
+        DT_MI_quanstat = np.zeros((3 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
-            DT_MI_quanstat[(i * 2):((i + 1) * 2)] = self.DT_MI_QUANT.update_get_1D_Stats(dstIP, timestamp, datagramSize,
-                                                                              self.Lambdas[i], quantiles=[25, 75])
+            DT_MI_quanstat[(i * 3):((i + 1) * 3)] = self.DT_MI_QUANT.update_get_1D_Stats(dstIP, timestamp, datagramSize,
+                                                                              self.Lambdas[i], quantiles=[25, 50, 75])
         #return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, MI_flagstat_count, H_flagstat_count, HT_Hp_flagstat_count, MI_flagstat_mean, H_flagstat_mean, HT_Hp_flagstat_mean))  # concatenation of stats into one stat vector
-        return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, HtMiJitstat, HtHpJitstat, DT_MIstat, DtMiJitstat, MI_flagstat_count, H_flagstat_count, HT_Hp_flagstat_count, DT_MI_flagstat_count, MI_flagstat_mean, H_flagstat_mean, HT_Hp_flagstat_mean, DT_MI_flagstat_mean, MI_quanstat, HH_quanstat, HpHp_quanstat, DT_MI_quanstat))  # concatenation of stats into one stat vector
+        return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, HtMiJitstat, HtHpJitstat, DT_MIstat, DtMiJitstat, MI_flagstat_mean, H_flagstat_mean, HT_Hp_flagstat_mean, DT_MI_flagstat_mean, MI_quanstat, HH_quanstat, HpHp_quanstat, DT_MI_quanstat))  # concatenation of stats into one stat vector
 
     def getNetStatHeaders(self):
         MIstat_headers = []

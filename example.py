@@ -329,10 +329,10 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
 # print(f"PCAP: {line_count}")
 # quit()
 
-# kitplugin = KitPlugin(input_path="input_data/Thursday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-# kitplugin.feature_builder("input_data/attack_types/thursday_features_added.csv")
-# print('thursday done')
-# quit()
+kitplugin = KitPlugin(input_path="input_data/Monday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
+kitplugin.feature_builder("input_data/attack_types/monday_features_added.csv")
+print('monday done')
+quit()
 
 attacks1 = ["sample_60"]
 #attacks1 = ["benign - small", "SSH-Patator - Attempted", "SSH-Patator", "FTP-Patator", "FTP-Patator - Attempted"]

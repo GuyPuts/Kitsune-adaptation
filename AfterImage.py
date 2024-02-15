@@ -225,7 +225,7 @@ class incStat:
         if tcpFlags and not ssh:
             if self.tcpPkts > 0:
                 if tcpMean:
-                    return [flag / self.tcpPkts for flag in list(self.flag_counts.values())]
+                    return [flag / self.tcpPkts for flag in list(self.flag_counts.values())].append(self.tcpPkts)
                 else:
                     return list(self.flag_counts.values())
             else:

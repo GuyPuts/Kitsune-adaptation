@@ -213,7 +213,7 @@ class netStat:
         HHstat_jit = np.zeros((4 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
             HHstat_jit[(i * 4):((i + 1) * 4)] = self.HT_jit.update_get_1D_Stats(srcIP + dstIP, timestamp, 0,
-                                                                                self.Lambdas[i], isTypeDiff=True,median=True)
+                                                                                self.Lambdas[i], isTypeDiff=True,quantiles=[50])
 
         # Host-Host BW: Stats on the dual traffic behavior between srcIP and dstIP
         HpHpstat = np.zeros((7 * len(self.Lambdas, )))
@@ -231,12 +231,12 @@ class netStat:
         HtMiJitstat = np.zeros((4 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
             HtMiJitstat[(i * 4):((i + 1) * 4)] = self.HT_MI_jit.update_get_1D_Stats(srcIP, timestamp, datagramSize,
-                                                                           self.Lambdas[i], isTypeDiff=True,median=True)
+                                                                           self.Lambdas[i], isTypeDiff=True,quantiles=[50])
 
         HtHpJitstat = np.zeros((4* len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
             HtHpJitstat[(i * 4):((i + 1) * 4)] = self.HT_Hp_jit.update_get_1D_Stats(srcIP+srcProtocol+dstIP+dstProtocol, timestamp, datagramSize,
-                                                                           self.Lambdas[i], isTypeDiff=True,median=True)
+                                                                           self.Lambdas[i], isTypeDiff=True,quantiles=[50])
 
         # DST stats
         DT_MIstat = np.zeros((onedimensionalfeaturecount * len(self.Lambdas, )))
@@ -248,7 +248,7 @@ class netStat:
         DtMiJitstat = np.zeros((4 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
             DtMiJitstat[(i * 4):((i + 1) * 4)] = self.DT_MI_jit.update_get_1D_Stats(dstIP, timestamp, datagramSize,
-                                                                                    self.Lambdas[i], isTypeDiff=True,median=True)
+                                                                                    self.Lambdas[i], isTypeDiff=True,quantiles=[50])
 
         # Flag means
         MI_flagstat_mean = np.zeros((9 * len(self.Lambdas, )))

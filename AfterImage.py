@@ -49,7 +49,7 @@ class incStat:
         self.counters = [[0] * self.width for _ in range(self.depth)]
         self.min = False
         self.max = False
-        self.tdigest = TDigest()
+        self.tdigest = TDigest(delta=0.1)
 
     def insert(self, v, t=0, tcpFlags=False, ftp=False, ssh=False, sqlinj=False, xss=False, median=False, minmax=False, quantiles=False):  # v is a scalar, t is v's arrival the timestamp
         if sqlinj:
@@ -273,6 +273,8 @@ class incStat:
             median = heapq.nsmallest(median_idx + 1, heap)[-1]
             return [self.w, self.cur_mean, self.cur_var, median]
         elif quantiles:
+            if quantiles == [50]:
+                return [self.w, self.cur_mean, self.cur_var, self.tdigest.percentile(50)]
             values = []
             for quantile in quantiles:
                 values.append(self.tdigest.percentile(quantile))
@@ -452,6 +454,9 @@ class incStatDB:
             self.HT[key] = incS #add new entry
         return incS
 
+    def deregister(self, ID):
+        del self.HT[ID]
+
     # Registers covariance tracking for two streams, registers missing streams
     def register_cov(self,ID1,ID2,Lambda=1,init_time=0,isTypeDiff=False):
         #Default Lambda?
@@ -562,6 +567,17 @@ class incStatDB:
     def update_get_1D_Stats(self, ID,t,v,Lambda=1,isTypeDiff=False, tcpFlags=False, tcpMean=False, ftp=False, ssh=False, sqlinj=False, sqltype=False, xss=False, xsstype=False, median=False, minmax=False, quantiles=False):  # weight, mean, std
         incS = self.update(ID,t,v,Lambda,isTypeDiff, tcpFlags=tcpFlags, ftp=ftp, ssh=ssh, sqlinj=sqlinj, sqltype=sqltype, xss=xss, xsstype=xsstype, median=median, minmax=minmax, quantiles=quantiles)
         stats = incS.allstats_1D(tcpFlags, tcpMean, ftp, ssh, sqlinj, xss, median, minmax, quantiles)
+        if tcpFlags == False and tcpMean == False and quantiles == False:
+            index = 1
+            if 0 < stats[index] < 1e-8:
+                self.deregister(f'{ID}_{Lambda}')
+        if quantiles and quantiles != [50]:
+            for stat in stats:
+                if 0 < stat < 1e-8:
+                    self.deregister(f'{ID}_{Lambda}')
+        if quantiles == [50]:
+            if 0 < stats[3] < 1e-5:
+                self.deregister(f'{ID}_{Lambda}')
         return stats
 
 

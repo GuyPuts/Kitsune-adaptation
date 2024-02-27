@@ -123,8 +123,6 @@ def kitTester(day, attack_type, newFeatures=False):
             file.writelines(non_blank_lines)
         fe = FE(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv')
         fe.get_all_vectors(f'input_data/{newFeatures}/attack_types/{day}_features_{attack_type}.csv')
-        #TODO remove statement
-        quit()
     else:
         kitplugin.map_packets_to_features(f'input_data/attack_types/{day}_{attack_type}.pcap.tsv',
                                       f'input_data/attack_types/{day}_features.csv',
@@ -329,21 +327,22 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
 # print(f"PCAP: {line_count}")
 # quit()
 
-kitplugin = KitPlugin(input_path="input_data/Monday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-kitplugin.feature_builder("input_data/attack_types/monday_features_added.csv")
-print('monday done')
-quit()
+# kitplugin = KitPlugin(input_path="input_data/Monday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
+# kitplugin.feature_builder("input_data/attack_types/monday_features_added.csv")
+# print('monday done')
+# quit()
 
 attacks1 = ["sample_60"]
-#attacks1 = ["benign - small", "SSH-Patator - Attempted", "SSH-Patator", "FTP-Patator", "FTP-Patator - Attempted"]
-#attacks1 = ["benign - small"]
-#attacks1 = ["Web Attack - Brute Force", "Web Attack - Brute Force - Attempted"]
+attacks1 = ["benign - small", "SSH-Patator - Attempted", "SSH-Patator", "FTP-Patator", "FTP-Patator - Attempted"]
+# attacks1 = ["sample_medium_15"]
+# attacks1 = ["benign - small"]
+# attacks1 = ["Web Attack - Brute Force", "Web Attack - Brute Force - Attempted"]
 convs = []
 
 import time
 oldtime = time.time()
 for attack in attacks1:
-    convs.append(kitTester("monday", attack, newFeatures='new_all_features_dummy'))
+    convs.append(kitTester("tuesday", attack, newFeatures='new_all_features_tue'))
 newtime = time.time()
 print(f"Total duration of code execution: {newtime-oldtime} seconds")
 print(f"Started at {time.asctime(time.localtime(oldtime))}")

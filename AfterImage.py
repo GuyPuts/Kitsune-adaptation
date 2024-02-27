@@ -3,7 +3,7 @@ import math
 from collections import deque
 from datetime import timedelta
 from random import random
-from tdigest import TDigest
+from pytdigest import TDigest
 import numpy as np
 
 
@@ -49,7 +49,7 @@ class incStat:
         self.counters = [[0] * self.width for _ in range(self.depth)]
         self.min = False
         self.max = False
-        self.tdigest = TDigest(delta=0.1)
+        self.tdigest = TDigest(50)
 
     def insert(self, v, t=0, tcpFlags=False, ftp=False, ssh=False, sqlinj=False, xss=False, median=False, minmax=False, quantiles=False):  # v is a scalar, t is v's arrival the timestamp
         if sqlinj:
@@ -231,19 +231,19 @@ class incStat:
             else:
                 flags = [0, 0, 0, 0, 0, 0, 0, 0]
                 return flags
-            flags = [0, 0, 0, 0, 0, 0, 0, 0]
-            if self.tcpBuffer:
-                for dictionary in self.tcpBuffer:
-                    flags[0] += dictionary["FIN"]
-                    flags[1] += dictionary["SYN"]
-                    flags[2] += dictionary["RST"]
-                    flags[3] += dictionary["PSH"]
-                    flags[4] += dictionary["ACK"]
-                    flags[5] += dictionary["URG"]
-                    flags[6] += dictionary["ECE"]
-                    flags[7] += dictionary["CWR"]
-                if tcpMean:
-                    return [x / self.tcpPkts for x in flags]
+            # flags = [0, 0, 0, 0, 0, 0, 0, 0]
+            # if self.tcpBuffer:
+            #     for dictionary in self.tcpBuffer:
+            #         flags[0] += dictionary["FIN"]
+            #         flags[1] += dictionary["SYN"]
+            #         flags[2] += dictionary["RST"]
+            #         flags[3] += dictionary["PSH"]
+            #         flags[4] += dictionary["ACK"]
+            #         flags[5] += dictionary["URG"]
+            #         flags[6] += dictionary["ECE"]
+            #         flags[7] += dictionary["CWR"]
+            #     if tcpMean:
+            #         return [x / self.tcpPkts for x in flags]
             return flags
         elif ftp:
             count = sum(1 for packet in self.ftp_recent_packets if packet[1] < self.ftp_threshold_size)
@@ -259,7 +259,7 @@ class incStat:
             minmax = abs(self.max - self.min)
             return minmax
         elif median:
-            median = self.tdigest.percentile(50)
+            median = self.tdigest.inverse_cdf(0.50)
             return [self.w, self.cur_mean, self.cur_var, median]
             heap = []
             for i in range(self.width):
@@ -274,10 +274,10 @@ class incStat:
             return [self.w, self.cur_mean, self.cur_var, median]
         elif quantiles:
             if quantiles == [50]:
-                return [self.w, self.cur_mean, self.cur_var, self.tdigest.percentile(50)]
+                return [self.w, self.cur_mean, self.cur_var, self.tdigest.inverse_cdf(0.50)]
             values = []
             for quantile in quantiles:
-                values.append(self.tdigest.percentile(quantile))
+                values.append(self.tdigest.inverse_cdf(quantile/100))
             return values
         return [self.w, self.cur_mean, self.cur_var]
 

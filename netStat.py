@@ -221,6 +221,7 @@ class netStat:
                                                                                 self.Lambdas[i], isTypeDiff=True,quantiles=[50])
         if len(HHstat_jit) != len(self.Lambdas) * 4:
             print('malaise in HHstat_jit')
+        HHstat_jit = [HHstat_jit[i] for i in range(len(HHstat_jit)) if (i + 1) % 4 != 0]
         # Host-Host BW: Stats on the dual traffic behavior between srcIP and dstIP
         HpHpstat = np.zeros((7 * len(self.Lambdas, )))
         if srcProtocol == 'arp':
@@ -241,12 +242,14 @@ class netStat:
                                                                            self.Lambdas[i], isTypeDiff=True,quantiles=[50])
         if len(HtMiJitstat) != len(self.Lambdas) * 4:
             print('malaise in HtMiJitstat')
+        #HtMiJitstat = HtMiJitstat[3::4]
         HtHpJitstat = np.zeros((4* len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
             HtHpJitstat[(i * 4):((i + 1) * 4)] = self.HT_Hp_jit.update_get_1D_Stats(srcIP+srcProtocol+dstIP+dstProtocol, timestamp, datagramSize,
                                                                            self.Lambdas[i], isTypeDiff=True,quantiles=[50])
         if len(HtHpJitstat) != len(self.Lambdas) * 4:
             print('malaise in HtHpJitstat')
+        #HtHpJitstat = HtHpJitstat[3::4]
         # DST stats
         DT_MIstat = np.zeros((onedimensionalfeaturecount * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
@@ -332,6 +335,7 @@ class netStat:
                                                                            self.Lambdas[i], quantiles=[25, 50, 75])
         if len(MI_quanstat) != len(self.Lambdas) * 3:
             print('malaise in MI_quanstat')
+        #MI_quanstat = MI_quanstat[2::3]
         # Host-Host BW: Stats on the dual traffic behavior between srcIP and dstIP
         HH_quanstat = np.zeros((3 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
@@ -340,7 +344,7 @@ class netStat:
                                                                             self.Lambdas[i], quantiles=[25, 50, 75])
         if len(HH_quanstat) != len(self.Lambdas) * 3:
             print('malaise in HH_quanstat')
-
+        #HH_quanstat = HH_quanstat[2::3]
         # Host-Host BW: Stats on the dual traffic behavior between srcIP and dstIP
         HpHp_quanstat = np.zeros((3 * len(self.Lambdas, )))
         if srcProtocol == 'arp':
@@ -356,6 +360,7 @@ class netStat:
                                                                                    quantiles=[25, 50, 75])
         if len(HpHp_quanstat) != len(self.Lambdas) * 3:
             print('malaise in HpHp_quanstat')
+        #HpHp_quanstat = HpHp_quanstat[2::3]
         # DST stats
         DT_MI_quanstat = np.zeros((3 * len(self.Lambdas, )))
         for i in range(len(self.Lambdas)):
@@ -364,7 +369,7 @@ class netStat:
         if len(DT_MI_quanstat) != len(self.Lambdas) * 3:
             print('malaise in DT_MI_quanstat')
         #return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, MI_flagstat_count, H_flagstat_count, HT_Hp_flagstat_count, MI_flagstat_mean, H_flagstat_mean, HT_Hp_flagstat_mean))  # concatenation of stats into one stat vector
-        print(len(np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, HtMiJitstat, HtHpJitstat, DT_MIstat, DtMiJitstat, MI_flagstat_mean, H_flagstat_mean, HT_Hp_flagstat_mean, DT_MI_flagstat_mean, MI_quanstat, HH_quanstat, HpHp_quanstat, DT_MI_quanstat))))
+        return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat))
         return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, HtMiJitstat, HtHpJitstat, DT_MIstat, DtMiJitstat, MI_flagstat_mean, H_flagstat_mean, HT_Hp_flagstat_mean, DT_MI_flagstat_mean, MI_quanstat, HH_quanstat, HpHp_quanstat, DT_MI_quanstat))
 
     def getNetStatHeaders(self):

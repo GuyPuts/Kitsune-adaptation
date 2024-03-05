@@ -127,6 +127,7 @@ def kitTester(day, attack_type, newFeatures=False):
         kitplugin.map_packets_to_features(f'input_data/attack_types/{day}_{attack_type}.pcap.tsv',
                                       f'input_data/attack_types/{day}_features.csv',
                                       f'input_data/attack_types/{day}_features_{attack_type}.csv')
+    return True
     if newFeatures:
         if not os.path.exists(f'pickles/{newFeatures}'):
             os.makedirs(f'pickles/{newFeatures}')
@@ -316,10 +317,18 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
 # kitplugin.most_significant_packets_sampler("tuesday", 0.2667368034640465)
 #results = kitplugin.shap_documenter("wednesday")
 
-# print('fri')
-# with open(f"input_data/attack_types/monday_features_added.csv", newline='') as csvfile:
-#     csv_reader = csv.reader(csvfile)
-#     line_count = sum(1 for row in csv_reader)
+print('fri')
+sample = "sample_medium_80"
+with open(f"input_data/attack_types/monday_features_{sample}.csv", newline='') as csvfile:
+    csv_reader = csv.reader(csvfile)
+    line_count = sum(1 for row in csv_reader)
+print(f'lines: {line_count}')
+kitplugin=KitPlugin()
+print(f'optimizing kitnet for {sample}')
+kitplugin.hyper_opt_KitNET("monday", sample, line_count)
+print('done optimizing')
+quit()
+
 # print(f"features: {line_count}")
 # with open(f"input_data/Monday-WorkingHours.pcap.tsv", newline='') as csvfile:
 #     csv_reader = csv.reader(csvfile)
@@ -327,14 +336,15 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
 # print(f"PCAP: {line_count}")
 # quit()
 
-# kitplugin = KitPlugin(input_path="input_data/Monday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-# kitplugin.feature_builder("input_data/attack_types/monday_features_added.csv")
+# kitplugin = KitPlugin(input_path="input_data/Monday-WorkingHours2.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
+# kitplugin.feature_builder("input_data/attack_types/monday_features_added_again.csv")
 # print('monday done')
 # quit()
 
 attacks1 = ["sample_60"]
 attacks1 = ["benign - small", "SSH-Patator - Attempted", "SSH-Patator", "FTP-Patator", "FTP-Patator - Attempted"]
-# attacks1 = ["sample_medium_15"]
+attacks1 = ["sample_medium_25", "sample_medium_20", "sample_medium_15", "sample_medium_10"]
+attacks1 = ["sample_medium_validate"]
 # attacks1 = ["benign - small"]
 # attacks1 = ["Web Attack - Brute Force", "Web Attack - Brute Force - Attempted"]
 convs = []
@@ -342,7 +352,7 @@ convs = []
 import time
 oldtime = time.time()
 for attack in attacks1:
-    convs.append(kitTester("tuesday", attack, newFeatures='new_all_features_tue'))
+    convs.append(kitTester("monday", attack))
 newtime = time.time()
 print(f"Total duration of code execution: {newtime-oldtime} seconds")
 print(f"Started at {time.asctime(time.localtime(oldtime))}")

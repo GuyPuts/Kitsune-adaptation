@@ -124,6 +124,7 @@ def kitTester(day, attack_type, newFeatures=False):
         fe = FE(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv')
         fe.get_all_vectors(f'input_data/{newFeatures}/attack_types/{day}_features_{attack_type}.csv')
     else:
+        print('sampling features')
         kitplugin.map_packets_to_features(f'input_data/attack_types/{day}_{attack_type}.pcap.tsv',
                                       f'input_data/attack_types/{day}_features.csv',
                                       f'input_data/attack_types/{day}_features_{attack_type}.csv')
@@ -302,8 +303,10 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
 # plot_attack_boxplots(attack_dict, include_outliers=True, log_scale=False)
 # plot_attack_boxplots(attack_dict, include_outliers=True, log_scale=True)
 # create_attack_barchart_excel(attack_dict)
-#kitplugin = KitPlugin(input_path="input_data/Monday-WorkingHours.pcap", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-#kitplugin.feature_builder("input_data/attack_types/monday_features_test.csv", True)
+# kitplugin = KitPlugin(input_path="input_data/Thursday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
+# kitplugin.feature_builder("input_data/attack_types/thursday_features.csv", True)
+# print('di da done')
+# quit()
 
 #kitplugin = KitPlugin()
 # kitplugin.most_significant_packets_sampler("tuesday", 0.0739)
@@ -317,17 +320,7 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
 # kitplugin.most_significant_packets_sampler("tuesday", 0.2667368034640465)
 #results = kitplugin.shap_documenter("wednesday")
 
-print('fri')
-sample = "sample_medium_80"
-with open(f"input_data/attack_types/monday_features_{sample}.csv", newline='') as csvfile:
-    csv_reader = csv.reader(csvfile)
-    line_count = sum(1 for row in csv_reader)
-print(f'lines: {line_count}')
-kitplugin=KitPlugin()
-print(f'optimizing kitnet for {sample}')
-kitplugin.hyper_opt_KitNET("monday", sample, line_count)
-print('done optimizing')
-quit()
+
 
 # print(f"features: {line_count}")
 # with open(f"input_data/Monday-WorkingHours.pcap.tsv", newline='') as csvfile:
@@ -341,19 +334,71 @@ quit()
 # print('monday done')
 # quit()
 
+import optuna
+import pandas as pd
+
+# Define a function to load the study
+def load_study(study_name):
+    return optuna.load_study(study_name=study_name, storage="sqlite:///fixed.db")
+
+# Define a function to export study results to CSV
+def export_study_to_csv(study, study_name):
+    trials = study.get_trials()
+
+    data = [{'trial_number': trial.number, 'params': trial.params, 'user_attrs': trial.user_attrs, 'value': trial.value} for trial in trials]
+    df = pd.DataFrame(data)
+    with open(f'{study_name}.pkl', 'wb') as f:
+        pickle.dump(df, f)
+    df.to_csv(f'{study_name}.csv', index=False)
+
+#Example usage
+rounds = ["50"]
+for entry in rounds:
+    study_name = f'fixed_sample_medium_new2_{entry}'
+    study = load_study(study_name)
+    export_study_to_csv(study, study_name)
+
 attacks1 = ["sample_60"]
 attacks1 = ["benign - small", "SSH-Patator - Attempted", "SSH-Patator", "FTP-Patator", "FTP-Patator - Attempted"]
 attacks1 = ["sample_medium_25", "sample_medium_20", "sample_medium_15", "sample_medium_10"]
-attacks1 = ["sample_medium_validate"]
+attacks1 = ["sample_medium_new2_80"]
 # attacks1 = ["benign - small"]
 # attacks1 = ["Web Attack - Brute Force", "Web Attack - Brute Force - Attempted"]
-convs = []
 
-import time
-oldtime = time.time()
-for attack in attacks1:
-    convs.append(kitTester("monday", attack))
-newtime = time.time()
-print(f"Total duration of code execution: {newtime-oldtime} seconds")
-print(f"Started at {time.asctime(time.localtime(oldtime))}")
-print(f"Ended at {time.asctime(time.localtime(newtime))}")
+# import csv
+#
+# filename = 'input_data/attack_types/monday_features_sample_medium_validate2.csv'  # Replace 'example.csv' with your CSV file name
+#
+# data = []
+# with open(filename, 'r', newline='') as csvfile:
+#     csvreader = csv.reader(csvfile)
+#     for row in csvreader:
+#         data.append(row)
+#
+# pickle_file = 'pickles/medium_validate.pkl'
+# with open(pickle_file, 'wb') as f:
+#     pickle.dump(data, f)
+# quit()
+
+# convs = []
+# import time
+# oldtime = time.time()
+# for attack in attacks1:
+#     convs.append(kitTester("monday", attack))
+#
+# newtime = time.time()
+# print(f"Total duration of code execution: {newtime-oldtime} seconds")
+# print(f"Started at {time.asctime(time.localtime(oldtime))}")
+# print(f"Ended at {time.asctime(time.localtime(newtime))}")
+# # print('fri')
+#
+
+for sample in attacks1:
+    with open(f"input_data/attack_types/monday_features_{sample}.csv", newline='') as csvfile:
+        csv_reader = csv.reader(csvfile)
+        line_count = sum(1 for row in csv_reader)
+    print(f'lines: {line_count}')
+    kitplugin=KitPlugin()
+    print(f'optimizing kitnet for {sample}')
+    kitplugin.hyper_opt_KitNET("monday", sample, line_count)
+    print('done optimizing')

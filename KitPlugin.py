@@ -861,7 +861,7 @@ class KitPlugin:
                     if counter >= training_cutoff:
                         break
                 fp.close()
-
+            trial.set_user_attr("train_packets", counter)
             if attack_type == "all":
                 conv_train_err = self.map_results_to_conversation(train_err,
                                                                   f"input_data/attack_types/{day}_all.pcap.tsv")
@@ -883,18 +883,18 @@ class KitPlugin:
                     if counterValidate % 10000:
                         print("testing: "+str(counterValidate))
                     y_pred.append(score)
-            conv_y_pred = self.map_results_to_conversation(y_pred, f"input_data/attack_types/monday_sample_medium_validate.pcap.tsv")
+            conv_y_pred = self.map_results_to_conversation(y_pred, f"input_data/attack_types/monday_sample_medium_validate2.pcap.tsv")
             conv_y_pred = [max(values) for values in conv_y_pred.values()]
             trial.set_user_attr("training_error", np.mean(conv_train_err))
             trial.set_user_attr("train_median", np.median(conv_train_err))
             trial.set_user_attr("train_25_percentile", np.percentile(conv_train_err, 25))
             trial.set_user_attr("train_75_percentile", np.percentile(conv_train_err, 75))
             trial.set_user_attr("train_max", np.max(conv_train_err))
-            trial.set_user_attr("testing_error", np.mean(conv_train_err))
-            trial.set_user_attr("test_median", np.median(conv_train_err))
-            trial.set_user_attr("test_25_percentile", np.percentile(conv_train_err, 25))
-            trial.set_user_attr("test_75_percentile", np.percentile(conv_train_err, 75))
-            trial.set_user_attr("test_max", np.max(conv_train_err))
+            trial.set_user_attr("testing_error", np.mean(conv_y_pred))
+            trial.set_user_attr("test_median", np.median(conv_y_pred))
+            trial.set_user_attr("test_25_percentile", np.percentile(conv_y_pred, 25))
+            trial.set_user_attr("test_75_percentile", np.percentile(conv_y_pred, 75))
+            trial.set_user_attr("test_max", np.max(conv_y_pred))
 
             median_value = np.median(conv_train_err)
             median_absolute_deviation = np.median([abs(number - median_value) for number in conv_train_err])
@@ -919,6 +919,7 @@ class KitPlugin:
             for err in conv_y_pred:
                 if err > threshold_one:
                     anomaly_count += 1
+            FPR = anomaly_count / len(conv_y_pred)
             trial.set_user_attr("anomaly_count_one", anomaly_count)
             anomaly_count = 0
             for err in conv_y_pred:
@@ -928,18 +929,17 @@ class KitPlugin:
             trial.set_user_attr("train_convs", len(train_err))
             trial.set_user_attr("test_convs", len(conv_y_pred))
 
-            FPR = anomaly_count / len(conv_y_pred)
             return FPR
 
         # Dashboard logic
         search_space = {
             'numAE': [25, 50, 75],
-            'learning_rate': [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1],
+            'learning_rate': [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.15],
             'hidden_ratio': [0.25, 0.5, 0.75],
             'FMgrace': [math.floor(0.05*training_cutoff), math.floor(0.10*training_cutoff), math.floor(0.20 * training_cutoff)]
         }
-        name = f"mad2_hyperopt_newfeat_one{attack_type}"
-        study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), storage="sqlite:///hyperoptconvmediumnewfeat.db", study_name=name, load_if_exists=True)
+        name = f"fixed_{attack_type}"
+        study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), storage="sqlite:///fixed.db", study_name=name, load_if_exists=True)
         study.optimize(objective, n_trials=3*9*3*3)
 
         # Create a new workbook and select the active worksheet

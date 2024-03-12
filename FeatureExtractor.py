@@ -96,7 +96,7 @@ class FE:
             num_lines = sum(1 for line in open(self.path, errors="ignore"))
             print("There are " + str(num_lines) + " Packets.")
             self.limit = min(self.limit, num_lines-1)
-            self.tsvinf = open(self.path, 'rt', encoding="utf8")
+            self.tsvinf = open(self.path, 'rt', encoding="utf8", errors="ignore")
             self.tsvin = csv.reader(self.tsvinf, delimiter='\t')
             row = self.tsvin.__next__() #move iterator past header
 

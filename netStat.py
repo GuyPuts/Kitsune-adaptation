@@ -369,7 +369,6 @@ class netStat:
         if len(DT_MI_quanstat) != len(self.Lambdas) * 3:
             print('malaise in DT_MI_quanstat')
         #return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, MI_flagstat_count, H_flagstat_count, HT_Hp_flagstat_count, MI_flagstat_mean, H_flagstat_mean, HT_Hp_flagstat_mean))  # concatenation of stats into one stat vector
-        return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat))
         return np.concatenate((MIstat, HHstat, HHstat_jit, HpHpstat, HtMiJitstat, HtHpJitstat, DT_MIstat, DtMiJitstat, MI_flagstat_mean, H_flagstat_mean, HT_Hp_flagstat_mean, DT_MI_flagstat_mean, MI_quanstat, HH_quanstat, HpHp_quanstat, DT_MI_quanstat))
 
     def getNetStatHeaders(self):

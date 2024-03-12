@@ -838,7 +838,7 @@ class KitPlugin:
             hidden_ratio = trial.suggest_float('hidden_ratio', 0, 1)
             FMgrace = trial.suggest_int('FMgrace', 0, 5000000)
 
-            kit = KitNET(100, max_autoencoder_size=numAE, FM_grace_period=FMgrace, AD_grace_period=math.floor(training_cutoff*0.9), learning_rate=learning_rate, hidden_ratio=hidden_ratio)
+            kit = KitNET(420, max_autoencoder_size=numAE, FM_grace_period=FMgrace, AD_grace_period=math.floor(training_cutoff*0.9), learning_rate=learning_rate, hidden_ratio=hidden_ratio)
             # Load the feature list beforehand to save time
             counter = 0
             if attack_type == "all":
@@ -876,7 +876,6 @@ class KitPlugin:
                 validateList = pickle.load(f)
             for packet in validateList:
                 if packet:
-                    packet = packet[0].split(',')
                     packet = [float(element) for element in packet]
                     packet = np.array(packet)
                     score = kit.execute(packet)
@@ -901,7 +900,11 @@ class KitPlugin:
             trial.set_user_attr("mad", median_absolute_deviation)
 
             threshold = median_value + 2 * median_absolute_deviation
+            threshold_one = median_value + median_absolute_deviation
+            threshold_median = median_value
+
             trial.set_user_attr("threshold", threshold)
+            trial.set_user_attr("threshold_one", threshold)
 
             trial.set_user_attr("test_minus_train_error", np.mean(conv_y_pred)-np.mean(conv_train_err))
 
@@ -911,6 +914,16 @@ class KitPlugin:
                     anomaly_count += 1
 
             trial.set_user_attr("anomaly_count", anomaly_count)
+            anomaly_count = 0
+            for err in conv_y_pred:
+                if err > threshold_one:
+                    anomaly_count += 1
+            trial.set_user_attr("anomaly_count_one", anomaly_count)
+            anomaly_count = 0
+            for err in conv_y_pred:
+                if err > threshold_median:
+                    anomaly_count += 1
+            trial.set_user_attr("anomaly_count_median", anomaly_count)
             trial.set_user_attr("train_convs", len(train_err))
             trial.set_user_attr("test_convs", len(conv_y_pred))
 
@@ -924,8 +937,8 @@ class KitPlugin:
             'hidden_ratio': [0.25, 0.5, 0.75],
             'FMgrace': [math.floor(0.05*training_cutoff), math.floor(0.10*training_cutoff), math.floor(0.20 * training_cutoff)]
         }
-        name = f"mad2_hyperopt_final_{attack_type}"
-        study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), storage="sqlite:///hyperoptconvmediumfinal.db", study_name=name, load_if_exists=True)
+        name = f"mad2_hyperopt_newfeat_one{attack_type}"
+        study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), storage="sqlite:///hyperoptconvmediumnewfeat.db", study_name=name, load_if_exists=True)
         study.optimize(objective, n_trials=3*9*3*3)
 
         # Create a new workbook and select the active worksheet

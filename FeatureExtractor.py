@@ -93,7 +93,7 @@ class FE:
                     decrement = True
 
             print("counting lines in file...")
-            num_lines = sum(1 for line in open(self.path))
+            num_lines = sum(1 for line in open(self.path, errors="ignore"))
             print("There are " + str(num_lines) + " Packets.")
             self.limit = min(self.limit, num_lines-1)
             self.tsvinf = open(self.path, 'rt', encoding="utf8")
@@ -222,7 +222,7 @@ class FE:
         print("tshark parsing complete. File saved as: "+self.path +".tsv")
 
     def get_num_features(self):
-        return 420
+        return 100
         return len(self.nstat.getNetStatHeaders())
     
     def get_all_vectors(self, csv_path=False, single=False, extra=False):

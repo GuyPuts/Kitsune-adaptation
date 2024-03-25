@@ -54,7 +54,7 @@ inputs = {
 # KitPlugin.run_series_stats(inputs)
 # Get feature list from pickle file
 # KitPlugin.feature_loader()
-# Train Kitsune on the training data
+# Train Kitsune on the1 training data
 # KitPlugin.kit_trainer(training_min, training_max)
 # Calculate SHAP-values
 # KitPlugin.shap_values_builder(training_min, training_max, testing_min, testing_max)
@@ -288,6 +288,35 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
     with open(f"pickles/{newFeatures}/anomDetector.pkl", 'wb') as f:
         pickle.dump(newkitnet, f)
 
+import os
+
+def concatenate_tsv_files(folder_path, output_file):
+    # Get a list of all .tsv files in the folder
+    tsv_files = [file for file in os.listdir(folder_path) if file.endswith('.tsv')]
+
+    # Check if any .tsv files are found
+    if len(tsv_files) == 0:
+        print("No .tsv files found in the specified folder.")
+        return
+
+    # Open output file for writing
+    with open(output_file, 'w') as outfile:
+        # Loop through each .tsv file
+        for file in tsv_files:
+            file_path = os.path.join(folder_path, file)
+            # Open each .tsv file for reading
+            with open(file_path, 'r', errors="ignore") as infile:
+                # Read each line from the input file and write it to the output file
+                for line in infile:
+                    outfile.write(line)
+
+    print(f"All files concatenated into '{output_file}'.")
+
+# # Example usage
+# folder_path = 'pcap'
+# output_file = 'all.pcap.tsv'
+# concatenate_tsv_files(folder_path, output_file)
+# quit('done')
 
 
 # attacks2 = ["benign - small", "FTP-Patator", "FTP-Patator - Attempted", "SSH-Patator", "SSH-Patator - Attempted"]
@@ -303,6 +332,7 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
 # plot_attack_boxplots(attack_dict, include_outliers=True, log_scale=False)
 # plot_attack_boxplots(attack_dict, include_outliers=True, log_scale=True)
 # create_attack_barchart_excel(attack_dict)
+
 # kitplugin = KitPlugin(input_path="input_data/Thursday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
 # kitplugin.feature_builder("input_data/attack_types/thursday_features.csv", True)
 # print('di da done')
@@ -322,10 +352,22 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
 
 
 
-kitplugin = KitPlugin(input_path="input_data/Friday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-kitplugin.feature_builder("input_data/attack_types/friday_features.csv")
-print('monday done')
-quit()
+# print(f"features: {line_count}")
+# with open(f"input_data/Monday-WorkingHours.pcap.tsv", newline='') as csvfile:
+#     csv_reader = csv.reader(csvfile)
+#     line_count = sum(1 for row in csv_reader)
+# print(f"PCAP: {line_count}")
+# quit()
+
+# print('building features')
+# for num in range(19, 28):
+#     kitplugin = KitPlugin(input_path=f"pcap/{num}.pcap", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
+# print('all done')
+# quit()
+
+# kitplugin.feature_builder("input_data/attack_types/monday_features_added_again.csv")
+# print('monday done')
+# quit()
 
 import optuna
 import pandas as pd
@@ -362,10 +404,7 @@ attacks1 = ["sample_medium_new2_80"]
 # attacks1 = ["benign - small"]
 # attacks1 = ["Web Attack - Brute Force", "Web Attack - Brute Force - Attempted"]
 
-# with open(f"input_data/attack_types/monday_features.csv", newline='') as csvfile:
-#     csv_reader = csv.reader(csvfile)
-#     for row in csv_reader:
-#         print(len(row))
+
 # import csv
 #
 # filename = 'input_data/attack_types/monday_features_sample_medium_validate2.csv'  # Replace 'example.csv' with your CSV file name
@@ -393,7 +432,6 @@ attacks1 = ["sample_medium_new2_80"]
 # print(f"Ended at {time.asctime(time.localtime(newtime))}")
 # # print('fri')
 #
-
 for sample in attacks1:
     with open(f"input_data/attack_types/monday_features_{sample}.csv", newline='') as csvfile:
         csv_reader = csv.reader(csvfile)

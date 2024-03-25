@@ -790,7 +790,6 @@ class KitPlugin:
                         if label[0] == 'Src' or label[0] == 'id' or not label:
                             continue
                         if (row[4] == label[0] and row[6] == label[1] and row[5] == label[2] and row[7] == label[3]) or (row[4] == label[2] and row[6] == label[3] and row[5] == label[0] and row[7] == label[1]):
-                            print('match')
                             label_iter = label[5]
                             label_val = label[4]
                             row.append(str(pkt_iter))

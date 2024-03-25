@@ -234,6 +234,7 @@ class FE:
                     if self.curPacketIndx % 100000 == 0:
                         print(self.curPacketIndx)
                     vector = self.get_next_vector(single, extra=extra)
+                    print(len(vector))
                     if len(vector) == 0 or self.curPacketIndx > self.limit:
                         self.curPacketIndx = 0
                         return csv_path

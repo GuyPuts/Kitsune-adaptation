@@ -1156,20 +1156,24 @@ class KitPlugin:
         return self.shap_values
 
     def run_kitsune_from_feature_csv(self, feature_path, training_cutoff, total_cutoff, numAE, learning_rate, hidden_ratio):
-        kit = KitNET(100, numAE, math.floor(training_cutoff * 0.05), training_cutoff * 0.9, learning_rate,
+        kit = KitNET(420, numAE, math.floor(training_cutoff * 0.05), training_cutoff * 0.9, learning_rate,
                      hidden_ratio)
         # Load the feature list beforehand to save time
         y_pred = []
         counter = 0
+        import time
+        oldtime = time.time()
         with open(feature_path) as fp:
             rd_ft = csv.reader(fp, delimiter="\t", quotechar='"')
-
             for packet in rd_ft:
                 if packet:
                     packet = packet[0].split(',')
                     packet = [float(element) for element in packet]
                     packet = np.array(packet)
                     if counter % 10000 == 0:
+                        newtime = time.time()
+                        print(f"Total duration of past 10k samples: {newtime-oldtime} seconds")
+                        oldtime = time.time()
                         print(counter)
                     if counter < total_cutoff:
                         if counter <= training_cutoff:

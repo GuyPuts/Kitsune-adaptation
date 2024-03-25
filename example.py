@@ -322,17 +322,10 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
 
 
 
-# print(f"features: {line_count}")
-# with open(f"input_data/Monday-WorkingHours.pcap.tsv", newline='') as csvfile:
-#     csv_reader = csv.reader(csvfile)
-#     line_count = sum(1 for row in csv_reader)
-# print(f"PCAP: {line_count}")
-# quit()
-
-# kitplugin = KitPlugin(input_path="input_data/Monday-WorkingHours2.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-# kitplugin.feature_builder("input_data/attack_types/monday_features_added_again.csv")
-# print('monday done')
-# quit()
+kitplugin = KitPlugin(input_path="input_data/Friday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
+kitplugin.feature_builder("input_data/attack_types/friday_features.csv")
+print('monday done')
+quit()
 
 import optuna
 import pandas as pd
@@ -352,11 +345,15 @@ def export_study_to_csv(study, study_name):
     df.to_csv(f'{study_name}.csv', index=False)
 
 #Example usage
-rounds = ["50"]
-for entry in rounds:
-    study_name = f'fixed_sample_medium_new2_{entry}'
-    study = load_study(study_name)
-    export_study_to_csv(study, study_name)
+# rounds = ["50"]
+# for entry in rounds:
+#     study_name = f'fixed_sample_medium_new2_{entry}'
+#     study = load_study(study_name)
+#     export_study_to_csv(study, study_name)
+
+# plug = KitPlugin()
+# plug.run_kitsune_from_feature_csv("input_data/attack_types/monday_features.csv", training_cutoff=10097708, total_cutoff=10097708, numAE=50, learning_rate=0.0005, hidden_ratio=0.25)
+# quit('done')
 
 attacks1 = ["sample_60"]
 attacks1 = ["benign - small", "SSH-Patator - Attempted", "SSH-Patator", "FTP-Patator", "FTP-Patator - Attempted"]
@@ -365,6 +362,10 @@ attacks1 = ["sample_medium_new2_80"]
 # attacks1 = ["benign - small"]
 # attacks1 = ["Web Attack - Brute Force", "Web Attack - Brute Force - Attempted"]
 
+# with open(f"input_data/attack_types/monday_features.csv", newline='') as csvfile:
+#     csv_reader = csv.reader(csvfile)
+#     for row in csv_reader:
+#         print(len(row))
 # import csv
 #
 # filename = 'input_data/attack_types/monday_features_sample_medium_validate2.csv'  # Replace 'example.csv' with your CSV file name

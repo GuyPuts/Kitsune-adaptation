@@ -205,7 +205,7 @@ class FE:
         try:
             return self.nstat.updateGetStats(IPtype, srcMAC, dstMAC, srcIP, srcproto, dstIP, dstproto,
                                              int(framelen),
-                                             float(timestamp))
+                                             float(timestamp), tcpFlags=tcpFlags)
             # return self.nstat.updateGetStats(IPtype, srcMAC, dstMAC, srcIP, srcproto, dstIP, dstproto,
             #                                     int(framelen),
             #                                     float(timestamp), tcpFlags=tcpFlags, payload = 0, ftp=True, ssh=True, sqlinj=sqlinj, xss=sqlinj, median=True, minmax=True)

@@ -219,13 +219,17 @@ class incStat:
 
     #calculates and pulls all stats on this stream
     def allstats_1D(self, tcpFlags=False, tcpMean=False, ftp=False, ssh=False, sqlinj=False, xss=False, median=False, minmax=False, quantiles=False):
-        self.cur_mean = self.CF1 / self.w
-        self.cur_var = abs(self.CF2 / self.w - math.pow(self.cur_mean, 2))
+        if not tcpFlags:
+            self.cur_mean = self.CF1 / self.w
+            self.cur_var = abs(self.CF2 / self.w - math.pow(self.cur_mean, 2))
+
         # Return mean of tcp flags
         if tcpFlags and not ssh:
             if self.tcpPkts > 0:
                 if tcpMean:
-                    return [flag / self.tcpPkts for flag in list(self.flag_counts.values())].append(self.tcpPkts)
+                    data = [flag / self.tcpPkts for flag in list(self.flag_counts.values())]
+                    data.append(float(self.tcpPkts))
+                    return data
                 else:
                     return list(self.flag_counts.values())
             else:

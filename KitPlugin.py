@@ -57,10 +57,10 @@ class KitPlugin:
         self.nstat = ns.netStat(np.nan, maxHost, maxSess)
 
     # Calls Kitsune's get_feature_list function to build the list of features
-    def feature_builder(self, csv=False, single=False):
+    def feature_builder(self, csv=False, single=False, kind=1):
         print("Building features")
         # Dummy-running Kitsune to get a list of features
-        self.features_list = self.K.get_feature_list(csv, single)
+        self.features_list = self.K.get_feature_list(csv, single, kind=kind)
         return self.features_list
 
     # Loads Kitsune's feature list from a pickle file
@@ -213,7 +213,7 @@ class KitPlugin:
         ax.legend()
         plt.savefig(f'output_data/attack_types/{day}_{sheet_title}')
         # Show the plot
-        plt.show()
+        #plt.show()
 
     def create_histogram_to_sheet_lambda(self, day, featuremean, featuremedian, sheet_title, worksheet, col):
         # Extract keys and values from dictionaries
@@ -306,39 +306,146 @@ class KitPlugin:
         featuremeans = {
             'weight':[],
             'mean':[],
-            'standard deviation':[],
+            'variance':[],
             'radius':[],
             'magnitude':[],
             'covariance':[],
-            'pearson correlation coefficient':[]
+            'pearson correlation coefficient':[],
+            'weight (JIT)':[],
+            'mean (JIT)':[],
+            'variance (JIT)':[],
+            'median (JIT)':[],
+            'TCP FIN frequency':[],
+            'TCP SYN frequency':[],
+            'TCP RST frequency':[],
+            'TCP PSH frequency':[],
+            'TCP ACK frequency':[],
+            'TCP URG frequency':[],
+            'TCP ECE frequency':[],
+            'TCP CWR frequency':[],
+            'TCP Flag count':[],
+            '25th Quantile datagram size':[],
+            '50th Quantile datagram size (median)':[],
+            '75th Quantile datagram size':[]
         }
         featuremean = {
-            'weight': None,
-            'mean': None,
-            'standard deviation': None,
-            'radius': None,
-            'magnitude': None,
-            'covariance': None,
-            'pearson correlation coefficient': None
+            'weight':None,
+            'mean':None,
+            'variance':None,
+            'radius':None,
+            'magnitude':None,
+            'covariance':None,
+            'pearson correlation coefficient':None,
+            'weight (JIT)':None,
+            'mean (JIT)':None,
+            'variance (JIT)':None,
+            'median (JIT)':None,
+            'TCP FIN frequency':None,
+            'TCP SYN frequency':None,
+            'TCP RST frequency':None,
+            'TCP PSH frequency':None,
+            'TCP ACK frequency':None,
+            'TCP URG frequency':None,
+            'TCP ECE frequency':None,
+            'TCP CWR frequency':None,
+            'TCP Flag count':None,
+            '25th Quantile datagram size':None,
+            '50th Quantile datagram size (median)':None,
+            '75th Quantile datagram size':None
         }
         featuremedians = {
             'weight':[],
             'mean':[],
-            'standard deviation':[],
+            'variance':[],
             'radius':[],
             'magnitude':[],
             'covariance':[],
-            'pearson correlation coefficient':[]
+            'pearson correlation coefficient':[],
+            'weight (JIT)':[],
+            'mean (JIT)':[],
+            'variance (JIT)':[],
+            'median (JIT)':[],
+            'TCP FIN frequency':[],
+            'TCP SYN frequency':[],
+            'TCP RST frequency':[],
+            'TCP PSH frequency':[],
+            'TCP ACK frequency':[],
+            'TCP URG frequency':[],
+            'TCP ECE frequency':[],
+            'TCP CWR frequency':[],
+            'TCP Flag count':[],
+            '25th Quantile datagram size':[],
+            '50th Quantile datagram size (median)':[],
+            '75th Quantile datagram size':[]
         }
         featuremedian = {
-            'weight': None,
-            'mean': None,
-            'standard deviation': None,
-            'radius': None,
-            'magnitude': None,
-            'covariance': None,
-            'pearson correlation coefficient': None
+            'weight':None,
+            'mean':None,
+            'variance':None,
+            'radius':None,
+            'magnitude':None,
+            'covariance':None,
+            'pearson correlation coefficient':None,
+            'weight (JIT)':None,
+            'mean (JIT)':None,
+            'variance (JIT)':None,
+            'median (JIT)':None,
+            'TCP FIN frequency':None,
+            'TCP SYN frequency':None,
+            'TCP RST frequency':None,
+            'TCP PSH frequency':None,
+            'TCP ACK frequency':None,
+            'TCP URG frequency':None,
+            'TCP ECE frequency':None,
+            'TCP CWR frequency':None,
+            'TCP Flag count':None,
+            '25th Quantile datagram size':None,
+            '50th Quantile datagram size (median)':None,
+            '75th Quantile datagram size':None
         }
+
+        aggtypemeans = {
+            'SRC IP':[],
+            'Channel':[],
+            'Socket':[],
+            'DST IP':[],
+            'SRC IP (JIT)':[],
+            'Channel (JIT)':[],
+            'Socket (JIT)':[],
+            'DST IP (JIT)':[]
+
+        }
+        aggtypemean = {
+            'SRC IP': None,
+            'Channel': None,
+            'Socket': None,
+            'DST IP': None,
+            'SRC IP (JIT)': None,
+            'Channel (JIT)': None,
+            'Socket (JIT)': None,
+            'DST IP (JIT)': None
+        }
+        aggtypemedians = {
+            'SRC IP': [],
+            'Channel': [],
+            'Socket': [],
+            'DST IP': [],
+            'SRC IP (JIT)': [],
+            'Channel (JIT)': [],
+            'Socket (JIT)': [],
+            'DST IP (JIT)': []
+        }
+        aggtypemedian = {
+            'SRC IP': None,
+            'Channel': None,
+            'Socket': None,
+            'DST IP': None,
+            'SRC IP (JIT)': None,
+            'Channel (JIT)': None,
+            'Socket (JIT)': None,
+            'DST IP (JIT)': None
+        }
+
         for col, value in enumerate(header_row):
             cell = sheet.cell(row=1, column=6 + col)
             cell.value = value
@@ -350,43 +457,116 @@ class KitPlugin:
             minimum = np.min(num_list)
             maximum = np.max(num_list)
             total_sum = np.sum(num_list)
-            if idx+1 <= 20:
+            if idx+1 in [1,2,3,16,17,18,19,20,21,22,51,52,53,54,71,72,73,74,75,76,77,106,107,108,109,126,127,128,129,146,147,148,161,162,163,164,181,182,183,184,185,186,187,188,189,226,227,228,229,230,231,232,233,234,271,272,273,274,275,276,277,278,279,316,317,318,319,320,321,322,323,324,361,362,363,376,377,378,391,392,393,406,407,408]:
                 lambdameans['5'].append(mean)
                 lambdamedians['5'].append(median)
-            if idx+1 > 20 and idx+1 <= 40:
+            if idx+1 in [4,5,6,23,24,25,26,27,28,29,55,56,57,58,78,79,80,81,82,83,84,110,111,112,113,130,131,132,133,149,150,151,165,166,167,168,190,191,192,193,194,195,196,197,198,235,236,237,238,239,240,241,242,243,280,281,282,283,284,285,286,287,288,325,326,327,328,329,330,331,332,333,364,365,366,379,380,381,394,395,396,409,410,411]:
                 lambdameans['3'].append(mean)
                 lambdamedians['3'].append(median)
-            if idx+1 > 40 and idx+1 <= 60:
+            if idx+1 in [7,8,9,30,31,32,33,34,35,36,59,60,61,62,85,86,87,88,89,90,91,114,115,116,117,134,135,136,137,152,153,154,169,170,171,172,199,200,201,202,203,204,205,206,207,244,245,246,247,248,249,250,251,252,289,290,291,292,293,294,295,296,297,334,335,336,337,338,339,340,341,342,367,368,369,382,383,384,397,398,399,412,413,414]:
                 lambdameans['1'].append(mean)
                 lambdamedians['1'].append(median)
-            if idx+1 > 60 and idx+1 <= 80:
+            if idx+1 in [10,11,12,37,38,39,40,41,42,43,63,64,65,66,92,93,94,95,96,97,98,118,119,120,121,138,139,140,141,155,156,157,173,174,175,176,208,209,210,211,212,213,214,215,216,253,254,255,256,257,258,259,260,261,298,299,300,301,302,303,304,305,306,343,344,345,346,347,348,349,350,351,370,371,372,385,386,387,400,401,402,415,416,417]:
                 lambdameans['0.1'].append(mean)
                 lambdamedians['0.1'].append(median)
-            if idx+1 > 80 and idx+1 <= 100:
+            if idx+1 in [13,14,15,44,45,46,47,48,49,50,67,68,69,70,99,100,101,102,103,104,105,122,123,124,125,142,143,144,145,158,159,160,177,178,179,180,217,218,219,220,221,222,223,224,225,262,263,264,265,266,267,268,269,270,307,308,309,310,311,312,313,314,315,352,353,354,355,356,357,358,359,360,373,374,375,388,389,390,403,404,405,418,419,420]:
                 lambdameans['0.01'].append(mean)
                 lambdamedians['0.01'].append(median)
 
-            if idx+1 in [1, 4, 11, 14, 21, 24, 31, 34, 41, 44, 51, 54, 61, 64, 71, 74, 81, 84, 91, 94]:
+            if idx+1 in [1,4,7,10,13,16,23,30,37,44,71,78,85,92,99,146,149,152,155,158]:
                 featuremeans['weight'].append(mean)
                 featuremedians['weight'].append(median)
-            if idx+1 in [2, 5, 12, 15, 22, 25, 32, 35, 42, 45, 52, 55, 62, 65, 72, 75, 82, 85, 92, 95]:
+            if idx+1 in [2,5,8,11,14,17,24,31,38,45,72,79,86,93,100,147,150,153,156,159]:
                 featuremeans['mean'].append(mean)
                 featuremedians['mean'].append(median)
-            if idx + 1 in [3, 6, 13, 16, 23, 26, 33, 36, 43, 46, 53, 56, 63, 66, 73, 76, 83, 86, 93, 96]:
-                featuremeans['standard deviation'].append(mean)
-                featuremedians['standard deviation'].append(median)
-            if idx + 1 in [7, 17, 27, 37, 47, 57, 67, 77, 87, 97]:
+            if idx + 1 in [3,6,9,12,15,18,25,32,39,46,73,80,87,94,101,148,151,154,157,160]:
+                featuremeans['variance'].append(mean)
+                featuremedians['variance'].append(median)
+            if idx + 1 in [19,26,33,40,47,74,81,88,95,102]:
                 featuremeans['radius'].append(mean)
                 featuremedians['radius'].append(median)
-            if idx + 1 in [8, 18, 28, 38, 48, 58, 68, 78, 88, 98]:
+            if idx + 1 in [20,27,34,41,48,75,82,89,96,103]:
                 featuremeans['magnitude'].append(mean)
                 featuremedians['magnitude'].append(median)
-            if idx + 1 in [9, 19, 29, 39, 49, 59, 69, 79, 89, 99]:
+            if idx + 1 in [21,28,35,42,49,76,83,90,97,104]:
                 featuremeans['covariance'].append(mean)
                 featuremedians['covariance'].append(median)
-            if idx + 1 in [10, 20, 30, 40, 50, 60, 70, 80, 99, 100]:
+            if idx + 1 in [22,29,36,43,50,77,84,91,98,105]:
                 featuremeans['pearson correlation coefficient'].append(mean)
                 featuremedians['pearson correlation coefficient'].append(median)
+            if idx + 1 in [51,55,59,63,67,106,110,114,118,122,126,130,134,138,142,161,165,169,173,177]:
+                featuremeans['weight (JIT)'].append(mean)
+                featuremedians['weight (JIT)'].append(median)
+            if idx + 1 in [52,56,60,64,68,107,111,115,119,123,127,131,135,139,143,162,166,170,174,178]:
+                featuremeans['mean (JIT)'].append(mean)
+                featuremedians['mean (JIT)'].append(median)
+            if idx + 1 in [53,57,61,65,69,108,112,116,120,124,128,132,136,140,144,163,167,171,175,179]:
+                featuremeans['variance (JIT)'].append(mean)
+                featuremedians['variance (JIT)'].append(median)
+            if idx + 1 in [54,58,62,66,70,109,113,117,121,125,129,133,137,141,145,164,168,172,176,180]:
+                featuremeans['median (JIT)'].append(mean)
+                featuremedians['median (JIT)'].append(median)
+            if idx + 1 in [181,190,199,208,217,226,235,244,253,262,271,280,289,298,307,316,325,334,343,352]:
+                featuremeans['TCP FIN frequency'].append(mean)
+                featuremedians['TCP FIN frequency'].append(median)
+            if idx + 1 in [182,191,200,209,218,227,236,245,254,263,272,281,290,299,308,317,326,335,344,353]:
+                featuremeans['TCP SYN frequency'].append(mean)
+                featuremedians['TCP SYN frequency'].append(median)
+            if idx + 1 in [183,192,201,210,219,228,237,246,255,264,273,282,291,300,309,318,327,336,345,354]:
+                featuremeans['TCP RST frequency'].append(mean)
+                featuremedians['TCP RST frequency'].append(median)
+            if idx + 1 in [184,193,202,211,220,229,238,247,256,265,274,283,292,301,310,319,328,337,346,355]:
+                featuremeans['TCP PSH frequency'].append(mean)
+                featuremedians['TCP PSH frequency'].append(median)
+            if idx + 1 in [185,194,203,212,221,230,239,248,257,266,275,284,293,302,311,320,329,338,347,356]:
+                featuremeans['TCP ACK frequency'].append(mean)
+                featuremedians['TCP ACK frequency'].append(median)
+            if idx + 1 in [186,195,204,213,222,231,240,249,258,267,276,285,294,303,312,321,330,339,348,357]:
+                featuremeans['TCP URG frequency'].append(mean)
+                featuremedians['TCP URG frequency'].append(median)
+            if idx + 1 in [187,196,205,214,223,232,241,250,259,268,277,286,295,304,313,322,331,340,349,358]:
+                featuremeans['TCP ECE frequency'].append(mean)
+                featuremedians['TCP ECE frequency'].append(median)
+            if idx + 1 in [188,197,206,215,224,233,242,251,260,269,278,287,296,305,314,323,332,341,350,359]:
+                featuremeans['TCP CWR frequency'].append(mean)
+                featuremedians['TCP CWR frequency'].append(median)
+            if idx + 1 in [189,198,207,216,225,234,243,252,261,270,279,288,297,306,315,324,333,342,351,360]:
+                featuremeans['TCP Flag count'].append(mean)
+                featuremedians['TCP Flag count'].append(median)
+            if idx + 1 in [361,364,367,370,373,376,379,382,385,388,391,394,397,400,403,406,409,412,415,418]:
+                featuremeans['25th Quantile datagram size'].append(mean)
+                featuremedians['25th Quantile datagram size'].append(median)
+            if idx + 1 in [362,365,368,371,374,377,380,383,386,389,392,395,398,401,404,407,410,413,416,419]:
+                featuremeans['50th Quantile datagram size (median)'].append(mean)
+                featuremedians['50th Quantile datagram size (median)'].append(median)
+            if idx + 1 in [363,366,369,372,375,378,381,384,387,390,393,396,399,402,405,408,411,414,417,420]:
+                featuremeans['75th Quantile datagram size'].append(mean)
+                featuremedians['75th Quantile datagram size'].append(median)
+
+            if idx+1 in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,361,362,363,364,365,366,367,368,369,370,371,372,373,374,375]:
+                aggtypemeans['SRC IP'].append(mean)
+                aggtypemedians['SRC IP'].append(median)
+            if idx+1 in [16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,376,377,378,379,380,381,382,383,384,385,386,387,388,389,390]:
+                aggtypemeans['Channel'].append(mean)
+                aggtypemedians['Channel'].append(median)
+            if idx+1 in [71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287,288,289,290,291,292,293,294,295,296,297,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,391,392,393,394,395,396,397,398,399,400,401,402,403,404,405]:
+                aggtypemeans['Socket'].append(mean)
+                aggtypemedians['Socket'].append(median)
+            if idx+1 in [146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330,331,332,333,334,335,336,337,338,339,340,341,342,343,344,345,346,347,348,349,350,351,352,353,354,355,356,357,358,359,360,406,407,408,409,410,411,412,413,414,415,416,417,418,419,420]:
+                aggtypemeans['DST IP'].append(mean)
+                aggtypemedians['DST IP'].append(median)
+            if idx+1 in [106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125]:
+                aggtypemeans['SRC IP (JIT)'].append(mean)
+                aggtypemedians['SRC IP (JIT)'].append(median)
+            if idx+1 in [51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70]:
+                aggtypemeans['Channel (JIT)'].append(mean)
+                aggtypemedians['Channel (JIT)'].append(median)
+            if idx+1 in [126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145]:
+                aggtypemeans['Socket (JIT)'].append(mean)
+                aggtypemedians['Socket (JIT)'].append(median)
+            if idx+1 in [161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180]:
+                aggtypemeans['DST IP (JIT)'].append(mean)
+                aggtypemedians['DST IP (JIT)'].append(median)
             row_data = [mean, median, std_dev, variance, minimum, maximum, total_sum]
 
             for col, value in enumerate(row_data):
@@ -411,7 +591,7 @@ class KitPlugin:
             lambdamean[key] = np.mean(np.array(lambdameans[key]))
             cell = sheet.cell(row=row, column=3)
             cell.value = np.median(np.array(lambdamedians[key]))
-            print(f"key: {key}, value: {np.mean(np.array(lambdamedians[key]))}")
+
             lambdamedian[key] = np.median(np.array(lambdamedians[key]))
             row += 1
         row += 1
@@ -431,8 +611,29 @@ class KitPlugin:
             featuremean[key] = np.mean(np.array(featuremeans[key]))
             cell = sheet.cell(row=row, column=3)
             cell.value = np.median(np.array(featuremedians[key]))
+            print(f"key: {key}, value: {np.mean(np.array(featuremeans[key]))}")
             featuremedian[key] = np.median(np.array(featuremedians[key]))
             row += 1
+
+        cell = sheet.cell(row=row, column=1)
+        cell.value = "Grouped by aggregation type"
+        cell = sheet.cell(row=row, column=2)
+        cell.value = "mean"
+        cell = sheet.cell(row=row, column=3)
+        cell.value = "median"
+        row += 1
+        for key in aggtypemeans:
+            cell = sheet.cell(row=row, column=1)
+            cell.value = key
+            cell = sheet.cell(row=row, column=2)
+            cell.value = np.mean(np.array(aggtypemeans[key]))
+            aggtypemean[key] = np.mean(np.array(aggtypemeans[key]))
+            cell = sheet.cell(row=row, column=3)
+            cell.value = np.median(np.array(aggtypemedians[key]))
+            print(f"key: {key}, value: {np.mean(np.array(aggtypemeans[key]))}")
+            aggtypemedian[key] = np.median(np.array(aggtypemedians[key]))
+            row += 1
+
         self.create_histogram(day, featuremean, featuremedian, sheet_title+" grouped by feature name")
         self.create_histogram_to_sheet_feature(day, featuremean, featuremedian, sheet_title + " grouped by feature name", sheet, "A")
         self.create_histogram(day, lambdamean, lambdamedian, sheet_title + " grouped by lambda value")
@@ -1264,6 +1465,7 @@ class KitPlugin:
                         print('running: ')
                         print(counter)
                     if counter < test_limit:
+                        print(len(packet))
                         results.append(kit.execute(packet))
                         counter += 1
                     else:
@@ -1455,14 +1657,15 @@ class KitPlugin:
             pickle_file_name = f"{day.title()}_{attack_type}_results.pkl"
             feature_file_path = os.path.join(attack_types_folder, feature_file_name)
             pickle_file_path = os.path.join(pickles_folder, pickle_file_name)
-
+            print(attack_type)
             # Check if the pickle file exists
             if not os.path.exists(pickle_file_path):
+                print(f'pickle for {attack_type} not found')
                 continue
             # Load the pickle file containing reconstruction errors
             with open(pickle_file_path, 'rb') as pickle_file:
                 reconstruction_errors = pickle.load(pickle_file)
-
+            print(attack_type)
             # Load the corresponding feature CSV file
             features_df = pd.read_csv(feature_file_path, header=None)
             # Sort the errors and get the indices of the 40 highest
@@ -1557,34 +1760,34 @@ class KitPlugin:
         for attack_type in os.listdir(attack_types_folder):
             if not (attack_type.startswith(day) and attack_type.endswith("most_significant.csv")):
                 continue
-            if not 'XSS' in attack_type:
-                continue
             attack_type = attack_type.replace(".csv", "")
             attack_type = attack_type.replace(f"{day}_features_", "")
             # Loop over the different Kitsune configs we are going to make
             shap_values = self.shap_values_builder_from_features(
                 f"input_data/attack_types/{day}_features_{attack_type}.csv",
-                "input_data/attack_types/monday_features_sample_medium_validate.csv")
+                "input_data/attack_types/monday_features_sample_medium_validate2.csv")
 
             path = f'pickles/output_pickles/{day.title()}_{attack_type}shap_results.pkl'
             with open(path, 'wb') as f:
                 pickle.dump(shap_values, f)
             # Could do this with a Regular Expression, but I'm a sane person
+            with open (f'pickles/output_pickles/{day.title()}_{attack_type}shap_results.pkl', 'rb') as f:
+                self.shap_values = pickle.load(f)
             self.create_sheet(day, attack_type.replace("most_significant", "").replace("-", "").replace("_", "").replace(" ", ""))
             count += 1
         excel_file = f"output_data/shap_{day}_{datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
         self.workbook.save(excel_file)
 
     def train_kitsune(self):
-        with open(f"input_data/attack_types/monday_features_added.csv", newline='') as csvfile:
+        with open(f"input_data/attack_types/monday_features.csv", newline='') as csvfile:
             csv_reader = csv.reader(csvfile)
             line_count = sum(1 for row in csv_reader)
-        kit = KitNET(118, max_autoencoder_size=25, FM_grace_period=int(0.1*line_count),
-                     AD_grace_period=line_count, learning_rate=0.00001,
+        kit = KitNET(420, max_autoencoder_size=75, FM_grace_period=int(0.05*line_count),
+                     AD_grace_period=line_count, learning_rate=0.001,
                      hidden_ratio=0.25)
         # Load the feature list beforehand to save time
         counter = 0
-        with open(f"input_data/attack_types/monday_features_added.csv") as fp:
+        with open(f"input_data/attack_types/monday_features.csv") as fp:
             rd_ft = csv.reader(fp, delimiter="\t", quotechar='"')
             train_err = []
             for packet in rd_ft:
@@ -1601,7 +1804,8 @@ class KitPlugin:
             fp.close()
         median_value = np.median(train_err)
         median_absolute_deviation = np.median([abs(number - median_value) for number in train_err])
-
+        print('done training')
         threshold = median_value + 2 * median_absolute_deviation
+        print(f'threshold: {threshold}')
         with open("pickles/anomDetectorFullDataset.pkl", 'wb') as f:
             pickle.dump(kit, f)

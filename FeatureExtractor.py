@@ -106,7 +106,7 @@ class FE:
             self.limit = len(self.scapyin)
             print("Loaded " + str(len(self.scapyin)) + " Packets.")
 
-    def get_next_vector(self, single=False, extra=False, sqlinj=False):
+    def get_next_vector(self, single=False, extra=False, sqlinj=False, kind=1):
         if self.curPacketIndx == self.limit:
             if self.parse_type == 'tsv':
                 self.tsvinf.close()
@@ -205,7 +205,7 @@ class FE:
         try:
             return self.nstat.updateGetStats(IPtype, srcMAC, dstMAC, srcIP, srcproto, dstIP, dstproto,
                                              int(framelen),
-                                             float(timestamp), tcpFlags=tcpFlags)
+                                             float(timestamp), tcpFlags=tcpFlags, kind=kind)
             # return self.nstat.updateGetStats(IPtype, srcMAC, dstMAC, srcIP, srcproto, dstIP, dstproto,
             #                                     int(framelen),
             #                                     float(timestamp), tcpFlags=tcpFlags, payload = 0, ftp=True, ssh=True, sqlinj=sqlinj, xss=sqlinj, median=True, minmax=True)
@@ -225,7 +225,7 @@ class FE:
         return 420
         return len(self.nstat.getNetStatHeaders())
     
-    def get_all_vectors(self, csv_path=False, single=False, extra=False):
+    def get_all_vectors(self, csv_path=False, single=False, extra=False, kind=1):
         vectorList = []
         if csv_path:
             with open(csv_path, mode='w', newline='') as csv_file:
@@ -233,7 +233,7 @@ class FE:
                 while True:
                     if self.curPacketIndx % 100000 == 0:
                         print(self.curPacketIndx)
-                    vector = self.get_next_vector(single, extra=extra)
+                    vector = self.get_next_vector(single, extra=extra, kind=kind)
                     if len(vector) == 0 or self.curPacketIndx > self.limit:
                         self.curPacketIndx = 0
                         return csv_path

@@ -450,6 +450,7 @@ class KitPlugin:
             cell = sheet.cell(row=1, column=6 + col)
             cell.value = value
         for idx, num_list in enumerate(self.shap_values.T):
+            num_list = abs(num_list)
             mean = np.mean(num_list)
             median = np.median(num_list)
             std_dev = np.std(num_list)
@@ -1678,7 +1679,6 @@ class KitPlugin:
 
             true_positive = []
             false_negative = []
-
             for item in max_packets:
                 value = list(item.values())[0]  # Extracting the value from the dictionary
                 if value > threshold:
@@ -1686,14 +1686,20 @@ class KitPlugin:
                 else:
                     false_negative.append(item)
 
-
+            # Sort list
+            sentinel = False
+            if 'benign' in attack_type:
+                sentinel = True
+            true_positive = sorted(true_positive, key=lambda x: list(x.values())[0], reverse=sentinel)
+            false_negative = sorted(false_negative, key=lambda x: list(x.values())[0], reverse=sentinel)
             sorted_keys_tp = [list(d.keys())[0] for d in true_positive]
             sorted_keys_fn = [list(d.keys())[0] for d in false_negative]
             # Extract the significant features
             significant_features_tp = features_df.iloc[sorted_keys_tp]
             if len(significant_features_tp) > 0:
                 if len(significant_features_tp) > 40:
-                    significant_features_tp = significant_features_tp.sample(n=40, replace=False)
+                    #significant_features_tp = significant_features_tp.sample(n=40, replace=False)
+                    significant_features_tp = significant_features_tp[:40]
                 # Define the output file name
                 print(f'writing {attack_type} to file')
                 output_file_name = f"{day}_features_{attack_type}_tp_most_significant.csv"
@@ -1704,7 +1710,8 @@ class KitPlugin:
             significant_features_fn = features_df.iloc[sorted_keys_fn]
             if len(significant_features_fn) > 0:
                 if len(significant_features_fn) > 40:
-                    significant_features_fn = significant_features_fn.sample(n=40, replace=False)
+                    #significant_features_fn = significant_features_fn.sample(n=40, replace=False)
+                    significant_features_fn = significant_features_fn[:40]
                 # Define the output file name
                 output_file_name = f"{day}_features_{attack_type}_fn_most_significant.csv"
                 output_file_path = os.path.join(attack_types_folder, output_file_name)

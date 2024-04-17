@@ -38,10 +38,11 @@ class netStat:
     # HostLimit: no more that this many Host identifiers will be tracked
     # HostSimplexLimit: no more that this many outgoing channels from each host will be tracked (purged periodically)
     # Lambdas: a list of 'window sizes' (decay factors) to track for each stream. nan resolved to default [5,3,1,.1,.01]
-    def __init__(self, Lambdas = np.nan, HostLimit=255,HostSimplexLimit=1000):
+    def __init__(self, Lambdas = np.nan, HostLimit=255,HostSimplexLimit=100):
         #Lambdas
         if np.isnan(Lambdas):
             self.Lambdas = [5,3,1,.1,.01]
+            self.Lambdas = [5]
         else:
             self.Lambdas = Lambdas
 
@@ -228,6 +229,7 @@ class netStat:
         # if len(HHstat_jit) != len(self.Lambdas) * 4:
         #     print('issue in HHstat_jit')
         # Host-Host BW: Stats on the dual traffic behavior between srcIP and dstIP
+        self.Lambdas = [5]
         HpHpstat = np.zeros((7 * len(self.Lambdas, )))
         if srcProtocol == 'arp':
             for i in range(len(self.Lambdas)):

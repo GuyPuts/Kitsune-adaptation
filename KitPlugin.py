@@ -635,10 +635,10 @@ class KitPlugin:
             aggtypemedian[key] = np.median(np.array(aggtypemedians[key]))
             row += 1
 
-        self.create_histogram(day, featuremean, featuremedian, sheet_title+" grouped by feature name")
-        self.create_histogram_to_sheet_feature(day, featuremean, featuremedian, sheet_title + " grouped by feature name", sheet, "A")
-        self.create_histogram(day, lambdamean, lambdamedian, sheet_title + " grouped by lambda value")
-        self.create_histogram_to_sheet_lambda(day, lambdamean, lambdamedian, sheet_title + " grouped by lambda value", sheet, "F")
+        # self.create_histogram(day, featuremean, featuremedian, sheet_title+" grouped by feature name")
+        # self.create_histogram_to_sheet_feature(day, featuremean, featuremedian, sheet_title + " grouped by feature name", sheet, "A")
+        # self.create_histogram(day, lambdamean, lambdamedian, sheet_title + " grouped by lambda value")
+        # self.create_histogram_to_sheet_lambda(day, lambdamean, lambdamedian, sheet_title + " grouped by lambda value", sheet, "F")
         row += 1
 
         color_indices = self.get_high_low_indices()
@@ -1466,7 +1466,6 @@ class KitPlugin:
                         print('running: ')
                         print(counter)
                     if counter < test_limit:
-                        print(len(packet))
                         results.append(kit.execute(packet))
                         counter += 1
                     else:

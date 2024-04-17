@@ -84,50 +84,49 @@ inputs = {
 def kitTester(day, attack_type, newFeatures=False):
     from KitPlugin import KitPlugin
     kitplugin = KitPlugin()
-    print('reading labels file')
-    labels = kitplugin.read_label_file(f'input_data/attack_types/{day}_{attack_type}.csv')
-    iter = 0
-    for label in labels:
-        if iter == 0:
-            iter += 1
-            continue
-        label.append(str(labels.index(label)))
-
-    if newFeatures:
-        if not os.path.exists(f'input_data/{newFeatures}'):
-            os.makedirs(f'input_data/{newFeatures}')
-            print(f"Directory 'input_data/{newFeatures}' created successfully.")
-        else:
-            print(f"Directory 'input_data/{newFeatures}' already exists.")
-        if not os.path.exists(f'input_data/{newFeatures}/attack_types'):
-            os.makedirs(f'input_data/{newFeatures}/attack_types')
-            print(f"Directory 'input_data/{newFeatures}/attack_types' created successfully.")
-        else:
-            print(f"Directory 'input_data/{newFeatures}/attack_types' already exists.")
-
-    print('sampling packets by conversation')
-    if newFeatures:
-        kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
-                                                 f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', labels)
-    else:
-        kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
-                                             f'input_data/attack_types/{day}_{attack_type}.pcap.tsv', labels)
-
-    # Map samples to features of an existing featureList
-    if newFeatures:
-        with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'r') as file:
-            lines = file.readlines()
-        # Remove blank lines
-        non_blank_lines = [line for line in lines if line.strip()]
-        with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'w') as file:
-            file.writelines(non_blank_lines)
-        fe = FE(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv')
-        fe.get_all_vectors(f'input_data/{newFeatures}/attack_types/{day}_features_{attack_type}.csv')
-    else:
-        kitplugin.map_packets_to_features(f'input_data/attack_types/{day}_{attack_type}.pcap.tsv',
-                                      f'input_data/attack_types/{day}_features.csv',
-                                      f'input_data/attack_types/{day}_features_{attack_type}.csv')
-    return True
+    # print('reading labels file')
+    # labels = kitplugin.read_label_file(f'input_data/attack_types/{day}_{attack_type}.csv')
+    # iter = 0
+    # for label in labels:
+    #     if iter == 0:
+    #         iter += 1
+    #         continue
+    #     label.append(str(labels.index(label)))
+    #
+    # if newFeatures:
+    #     if not os.path.exists(f'input_data/{newFeatures}'):
+    #         os.makedirs(f'input_data/{newFeatures}')
+    #         print(f"Directory 'input_data/{newFeatures}' created successfully.")
+    #     else:
+    #         print(f"Directory 'input_data/{newFeatures}' already exists.")
+    #     if not os.path.exists(f'input_data/{newFeatures}/attack_types'):
+    #         os.makedirs(f'input_data/{newFeatures}/attack_types')
+    #         print(f"Directory 'input_data/{newFeatures}/attack_types' created successfully.")
+    #     else:
+    #         print(f"Directory 'input_data/{newFeatures}/attack_types' already exists.")
+    #
+    # print('sampling packets by conversation')
+    # if newFeatures:
+    #     kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
+    #                                              f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', labels)
+    # else:
+    #     kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
+    #                                          f'input_data/attack_types/{day}_{attack_type}.pcap.tsv', labels)
+    #
+    # # Map samples to features of an existing featureList
+    # if newFeatures:
+    #     with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'r') as file:
+    #         lines = file.readlines()
+    #     # Remove blank lines
+    #     non_blank_lines = [line for line in lines if line.strip()]
+    #     with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'w') as file:
+    #         file.writelines(non_blank_lines)
+    #     fe = FE(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv')
+    #     fe.get_all_vectors(f'input_data/{newFeatures}/attack_types/{day}_features_{attack_type}.csv')
+    # else:
+    #     kitplugin.map_packets_to_features(f'input_data/attack_types/{day}_{attack_type}.pcap.tsv',
+    #                                   f'input_data/attack_types/{day}_features.csv',
+    #                                   f'input_data/attack_types/{day}_features_{attack_type}.csv')
     if newFeatures:
         if not os.path.exists(f'pickles/{newFeatures}'):
             os.makedirs(f'pickles/{newFeatures}')
@@ -335,35 +334,47 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
 
 # kitplugin = KitPlugin(input_path=f"input_data/Wednesday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
 # print('building features first')
-# kitplugin.feature_builder(f"input_data/attack_types/wednesday_features_hphp_justatry.csv", kind=2)
+# kitplugin.feature_builder(f"input_data/attack_types/wednesday_features_hphp_5.csv", kind=2)
 # print('Done building features')
 # quit()
 # kitplugin = KitPlugin(input_path=f"input_data/Thursday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
 # print('building features secondhalf')
 # kitplugin.feature_builder(f"input_data/attack_types/thursday_features_secondhalf.csv", kind=3)
 # # print('replacing entries')
-def replace_entries(file1_path, file2_path, file3_path, output_path):
-    with open(file1_path, 'r') as f1, open(file2_path, 'r') as f2, open(output_path, 'w', newline='') as output_file:
+def replace_entries(file1_path, file2_path, file3_path, file4_path, file5_path, file6_path, file7_path, file8_path, file9_path, output_path):
+    with open(file1_path, 'r') as f1, open(file2_path, 'r') as f2, open(file3_path, 'r') as f3, open(file4_path, 'r') as f4, open(file5_path, 'r') as f5, open(file6_path, 'r') as f6, open(file7_path, 'r') as f7, open(file8_path, 'r') as f8, open(file9_path, 'r') as f9, open(output_path, 'w', newline='') as output_file:
         reader1 = csv.reader(f1)
         reader2 = csv.reader(f2)
+        reader3 = csv.reader(f3)
+        reader4 = csv.reader(f4)
+        reader5 = csv.reader(f5)
+        reader6 = csv.reader(f6)
+        reader7 = csv.reader(f7)
+        reader8 = csv.reader(f8)
+        reader9 = csv.reader(f9)
         writer = csv.writer(output_file)
 
         # Process File 1 and File 2
-        for i, (row1, row2) in enumerate(zip(reader1, reader2)):
-            row1[180:360] = row2
-            # new_row = row1[180:] + row2[:20] + row1[65:] + row2[20:] + row3
-            new_row = row1
+        for i, (row1, row2, row3, row4, row5, row6, row7, row8, row9) in enumerate(zip(reader1, reader2, reader3, reader4, reader5, reader6, reader7, reader8, reader9)):
+            new_row = row1 + row2 + row3 + row4 + row5 + row6 + row7 + row8 + row9
             writer.writerow(new_row)
 
             # Optionally print current line number every 10,000 lines
             if i % 10000 == 0:
                 print("Processed {} lines".format(i))
 
-file1_path = 'input_data/attack_types/friday_features_firsthalfsecondpart.csv'
-file2_path = 'input_data/attack_types/friday_features_secondhalf.csv'
-file3_path = 'input_data/attack_types/tuesday_features_secondhalf.csv'
-output_path = 'input_data/attack_types/friday_features.csv'
-#replace_entries(file1_path, file2_path, file3_path, output_path)
+file1_path = 'input_data/attack_types/wednesday_features_firsthalffirstpartfirst.csv'
+file2_path = 'input_data/attack_types/wednesday_features_hhjit_justatry.csv'
+file3_path = 'input_data/attack_types/wednesday_features_hphp_5.csv'
+file4_path = 'input_data/attack_types/wednesday_features_hphp_3.csv'
+file5_path = 'input_data/attack_types/wednesday_features_hphp_1.csv'
+file6_path = 'input_data/attack_types/wednesday_features_hphp_01.csv'
+file7_path = 'input_data/attack_types/wednesday_features_hphp_0_01.csv'
+file8_path = 'input_data/attack_types/wednesday_features_firsthalfsecondpart.csv'
+file9_path = 'input_data/attack_types/wednesday_features_secondhalf.csv'
+output_path = 'input_data/attack_types/wednesday_features.csv'
+#replace_entries(file1_path, file2_path, file3_path, file4_path, file5_path, file6_path, file7_path, file8_path, file9_path, output_path)
+
 # import csv
 
 # filename = 'input_data/attack_types/monday_features_sample_medium_validate2.csv'  # Replace 'example.csv' with your CSV file name
@@ -398,7 +409,6 @@ attacks1 = ["benign - small", "Botnet - Attempted", "Botnet", "DDoS", "Portscan"
 
 convs = []
 
-
 import time
 oldtime = time.time()
 for attack in attacks1:
@@ -407,11 +417,11 @@ newtime = time.time()
 print(f"Total duration of code execution: {newtime-oldtime} seconds")
 print(f"Started at {time.asctime(time.localtime(oldtime))}")
 print(f"Ended at {time.asctime(time.localtime(newtime))}")
-
-# kitplugin = KitPlugin()
-# kitplugin.most_significant_packets_sampler("thursday", 0.111966)
-# kitplugin.most_significant_packets_sampler("tuesday", 0.111966)
-# results = kitplugin.shap_documenter("thursday")
+#
+kitplugin = KitPlugin()
+kitplugin.most_significant_packets_sampler("friday", 0.111966)
+# #kitplugin.most_significant_packets_sampler("tuesday", 0.111966)
+results = kitplugin.shap_documenter("friday")
 # results = kitplugin.shap_documenter("tuesday")
 # attacks1 = ["sample_medium_new2_25"]
 # for sample in attacks1:

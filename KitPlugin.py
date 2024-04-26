@@ -450,7 +450,7 @@ class KitPlugin:
             cell = sheet.cell(row=1, column=6 + col)
             cell.value = value
         for idx, num_list in enumerate(self.shap_values.T):
-            num_list = abs(num_list)
+            #num_list = abs(num_list)
             mean = np.mean(num_list)
             median = np.median(num_list)
             std_dev = np.std(num_list)
@@ -991,6 +991,9 @@ class KitPlugin:
                     for label in labels:
                         if label[0] == 'Src' or label[0] == 'id' or not label:
                             continue
+                        if len(row) < 4:
+                            print('splitting')
+                            row = row[0].split('\t')
                         if (row[4] == label[0] and row[6] == label[1] and row[5] == label[2] and row[7] == label[3]) or (row[4] == label[2] and row[6] == label[3] and row[5] == label[0] and row[7] == label[1]):
                             print('match')
                             label_iter = label[5]
@@ -1007,18 +1010,19 @@ class KitPlugin:
         # Step 1: Read the packet TSV file and create a set of packet indices
         subset_indices = set()
         row_index = 0
+        print('reading packets')
         with open(packet_path, 'r', newline='') as packet_file:
             csvreader = csv.reader(packet_file)
             for row in csvreader:
                 if row:
                     #packet_index = int(row[19])  # Assuming index is in the 20th column
-                    print(row)
                     packet_index = int(row[-3])  # Assuming index is in the 23rd column
-                    print(packet_index)
                     subset_indices.add(packet_index)
                 row_index += 1
         # Step 2: Read the required statistics from the large feature CSV file
         # and write them to the output CSV file
+        print('reading features')
+        print(subset_indices)
         with open(feature_path, 'r', newline='') as feature_file, open(sampled_feature_path, 'w', newline='') as output_file:
             csvreader = csv.reader(feature_file)
             csvwriter = csv.writer(output_file)
@@ -1030,6 +1034,7 @@ class KitPlugin:
                 counter += 1
                 if packet_index in subset_indices:
                     # Write the row to the output CSV file
+                    print('match on feature')
                     csvwriter.writerow(row)
 
     # Runs a hyperparameter optimization on the supplied dataset, constrained by number of runs and packet limit
@@ -1649,6 +1654,8 @@ class KitPlugin:
         for attack_type in os.listdir(attack_types_folder):
             if attack_type == f"{day}_features.csv" or attack_type == f"{day}_BENIGN.csv" or not (attack_type.startswith(day) and attack_type.endswith(".csv")):
                 continue
+            if 'sanity' not in attack_type:
+                continue
             attack_type = attack_type.replace(".csv", "")
             attack_type = attack_type.replace(f"{day}_features_", "")
 
@@ -1667,6 +1674,7 @@ class KitPlugin:
                 reconstruction_errors = pickle.load(pickle_file)
             print(attack_type)
             # Load the corresponding feature CSV file
+            print(feature_file_path)
             features_df = pd.read_csv(feature_file_path, header=None)
             # Sort the errors and get the indices of the 40 highest
             #sorted_indices = list(filter(lambda x: x < len(features_df), np.argsort(reconstruction_errors)[-40:]))
@@ -1683,12 +1691,12 @@ class KitPlugin:
                 if value > threshold:
                     true_positive.append(item)
                 else:
-                    false_negative.append(item)
-
+                    true_positive.append(item)
             # Sort list
             sentinel = False
             if 'benign' in attack_type:
                 sentinel = True
+            # true_positive can indicate a true positive OR a true negative. Same is true for false_...
             true_positive = sorted(true_positive, key=lambda x: list(x.values())[0], reverse=sentinel)
             false_negative = sorted(false_negative, key=lambda x: list(x.values())[0], reverse=sentinel)
             sorted_keys_tp = [list(d.keys())[0] for d in true_positive]
@@ -1698,24 +1706,24 @@ class KitPlugin:
             if len(significant_features_tp) > 0:
                 if len(significant_features_tp) > 40:
                     #significant_features_tp = significant_features_tp.sample(n=40, replace=False)
-                    significant_features_tp = significant_features_tp[:40]
+                    significant_features_tp = significant_features_tp.sample(n=40)
                 # Define the output file name
                 print(f'writing {attack_type} to file')
-                output_file_name = f"{day}_features_{attack_type}_tp_most_significant.csv"
+                output_file_name = f"{day}_features_{attack_type}_most_significant.csv"
                 output_file_path = os.path.join(attack_types_folder, output_file_name)
                 # Save the significant features to a new CSV file
                 significant_features_tp.to_csv(output_file_path, index=False, header=False)
 
-            significant_features_fn = features_df.iloc[sorted_keys_fn]
-            if len(significant_features_fn) > 0:
-                if len(significant_features_fn) > 40:
-                    #significant_features_fn = significant_features_fn.sample(n=40, replace=False)
-                    significant_features_fn = significant_features_fn[:40]
-                # Define the output file name
-                output_file_name = f"{day}_features_{attack_type}_fn_most_significant.csv"
-                output_file_path = os.path.join(attack_types_folder, output_file_name)
-                # Save the significant features to a new CSV file
-                significant_features_fn.to_csv(output_file_path, index=False, header=False)
+            # significant_features_fn = features_df.iloc[sorted_keys_fn]
+            # if len(significant_features_fn) > 0:
+            #     if len(significant_features_fn) > 40:
+            #         #significant_features_fn = significant_features_fn.sample(n=40, replace=False)
+            #         significant_features_fn = significant_features_fn[:40]
+            #     # Define the output file name
+            #     output_file_name = f"{day}_features_{attack_type}_fn_most_significant.csv"
+            #     output_file_path = os.path.join(attack_types_folder, output_file_name)
+            #     # Save the significant features to a new CSV file
+            #     significant_features_fn.to_csv(output_file_path, index=False, header=False)
 
     def shap_values_builder_from_features(self, test_feature_path, benign_feature_path):
         path = 'pickles/anomDetectorFullDataset.pkl'
@@ -1766,23 +1774,25 @@ class KitPlugin:
         for attack_type in os.listdir(attack_types_folder):
             if not (attack_type.startswith(day) and attack_type.endswith("most_significant.csv")):
                 continue
+            if not 'sanity' in attack_type:
+                continue
             attack_type = attack_type.replace(".csv", "")
             attack_type = attack_type.replace(f"{day}_features_", "")
             # Loop over the different Kitsune configs we are going to make
             shap_values = self.shap_values_builder_from_features(
                 f"input_data/attack_types/{day}_features_{attack_type}.csv",
                 "input_data/attack_types/monday_features_sample_medium_validate2.csv")
-
+            
             path = f'pickles/output_pickles/{day.title()}_{attack_type}shap_results.pkl'
             with open(path, 'wb') as f:
                 pickle.dump(shap_values, f)
             # Could do this with a Regular Expression, but I'm a sane person
-            with open (f'pickles/output_pickles/{day.title()}_{attack_type}shap_results.pkl', 'rb') as f:
-                self.shap_values = pickle.load(f)
-            self.create_sheet(day, attack_type.replace("most_significant", "").replace("-", "").replace("_", "").replace(" ", ""))
-            count += 1
-        excel_file = f"output_data/shap_{day}_{datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
-        self.workbook.save(excel_file)
+            #with open (f'pickles/output_pickles/{day.title()}_{attack_type}shap_results.pkl', 'rb') as f:
+            #    self.shap_values = pickle.load(f)
+            #self.create_sheet(day, attack_type.replace("most_significant", "").replace("-", "").replace("_", "").replace(" ", ""))
+            #count += 1
+        #excel_file = f"output_data/shap_{day}_{datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
+        #self.workbook.save(excel_file)
 
     def train_kitsune(self):
         with open(f"input_data/attack_types/monday_features.csv", newline='') as csvfile:

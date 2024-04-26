@@ -450,7 +450,7 @@ class KitPlugin:
             cell = sheet.cell(row=1, column=6 + col)
             cell.value = value
         for idx, num_list in enumerate(self.shap_values.T):
-            num_list = abs(num_list)
+            #num_list = abs(num_list)
             mean = np.mean(num_list)
             median = np.median(num_list)
             std_dev = np.std(num_list)
@@ -991,6 +991,8 @@ class KitPlugin:
                     for label in labels:
                         if label[0] == 'Src' or label[0] == 'id' or not label:
                             continue
+                        if len(row) < 4:
+                            row = row[0].split('\t')
                         if (row[4] == label[0] and row[6] == label[1] and row[5] == label[2] and row[7] == label[3]) or (row[4] == label[2] and row[6] == label[3] and row[5] == label[0] and row[7] == label[1]):
                             print('match')
                             label_iter = label[5]
@@ -1085,7 +1087,7 @@ class KitPlugin:
                     if counterValidate % 10000:
                         print("testing: "+str(counterValidate))
                     y_pred.append(score)
-            conv_y_pred = self.map_results_to_conversation(y_pred, f"input_data/attack_types/monday_sample_medium_validate2.pcap.tsv")
+            conv_y_pred = self.map_results_to_conversation(y_pred, f"input_data/attack_types/noday_UNSW_Benign_medium_validate.pcap.tsv")
             conv_y_pred = [max(values) for values in conv_y_pred.values()]
             trial.set_user_attr("training_error", np.mean(conv_train_err))
             trial.set_user_attr("train_median", np.median(conv_train_err))

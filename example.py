@@ -84,7 +84,7 @@ inputs = {
 def kitTester(day, attack_type, newFeatures=False):
     from KitPlugin import KitPlugin
     kitplugin = KitPlugin()
-    # print('reading labels file')
+    print('reading labels file')
     # labels = kitplugin.read_label_file(f'input_data/attack_types/{day}_{attack_type}.csv')
     # iter = 0
     # for label in labels:
@@ -112,21 +112,22 @@ def kitTester(day, attack_type, newFeatures=False):
     # else:
     #     kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
     #                                          f'input_data/attack_types/{day}_{attack_type}.pcap.tsv', labels)
-    #
-    # # Map samples to features of an existing featureList
-    # if newFeatures:
-    #     with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'r') as file:
-    #         lines = file.readlines()
-    #     # Remove blank lines
-    #     non_blank_lines = [line for line in lines if line.strip()]
-    #     with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'w') as file:
-    #         file.writelines(non_blank_lines)
-    #     fe = FE(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv')
-    #     fe.get_all_vectors(f'input_data/{newFeatures}/attack_types/{day}_features_{attack_type}.csv')
-    # else:
-    #     kitplugin.map_packets_to_features(f'input_data/attack_types/{day}_{attack_type}.pcap.tsv',
-    #                                   f'input_data/attack_types/{day}_features.csv',
-    #                                   f'input_data/attack_types/{day}_features_{attack_type}.csv')
+    # return True
+    # Map samples to features of an existing featureList
+    if newFeatures:
+        with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'r') as file:
+            lines = file.readlines()
+        # Remove blank lines
+        non_blank_lines = [line for line in lines if line.strip()]
+        with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'w') as file:
+            file.writelines(non_blank_lines)
+        fe = FE(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv')
+        fe.get_all_vectors(f'input_data/{newFeatures}/attack_types/{day}_features_{attack_type}.csv')
+    else:
+        kitplugin.map_packets_to_features(f'input_data/attack_types/{day}_{attack_type}.pcap.tsv',
+                                      f'input_data/attack_types/{day}_features.csv',
+                                      f'input_data/attack_types/{day}_features_{attack_type}.csv')
+    return True
     if newFeatures:
         if not os.path.exists(f'pickles/{newFeatures}'):
             os.makedirs(f'pickles/{newFeatures}')
@@ -406,33 +407,25 @@ attacks1 = ["benign - small", "SSH-Patator - Attempted", "SSH-Patator", "FTP-Pat
 # # attacks1 = ["benign - small"]
 #attacks1 = ["benign - small", "Infiltration", "Infiltration - Attempted", "Infiltration - Portscan", "Web Attack - Brute Force - Attempted", "Web Attack - Brute Force", "Web Attack - SQL Injection", "Web Attack - SQL Injection - Attempted", "Web Attack - XSS", "Web Attack - XSS - Attempted"]
 attacks1 = ["benign - small", "Botnet - Attempted", "Botnet", "DDoS", "Portscan"]
-
+attacks1 = ["UNSW_Analysis", "UNSW_Backdoor", "UNSW_Exploits", "UNSW_Generic", "UNSW_Reconnaissance", "UNSW_Shellcode", "UNSW_Worms"]
+attacks1 = ['UNSW_Benign_medium_test']
 convs = []
 
-import time
-oldtime = time.time()
-for attack in attacks1:
-    convs.append(kitTester("friday", attack))
-newtime = time.time()
-print(f"Total duration of code execution: {newtime-oldtime} seconds")
-print(f"Started at {time.asctime(time.localtime(oldtime))}")
-print(f"Ended at {time.asctime(time.localtime(newtime))}")
-#
-kitplugin = KitPlugin()
-kitplugin.most_significant_packets_sampler("friday", 0.111966)
+# kitplugin = KitPlugin()
+#kitplugin.most_significant_packets_sampler("wednesday", 0.111966)
 # #kitplugin.most_significant_packets_sampler("tuesday", 0.111966)
-results = kitplugin.shap_documenter("friday")
-# results = kitplugin.shap_documenter("tuesday")
-# attacks1 = ["sample_medium_new2_25"]
-# for sample in attacks1:
-#     with open(f"input_data/attack_types/monday_features_{sample}.csv", newline='') as csvfile:
-#         csv_reader = csv.reader(csvfile)
-#         line_count = sum(1 for row in csv_reader)
-#     print(f'lines: {line_count}')
-#     kitplugin=KitPlugin()
-#     print(f'optimizing kitnet for {sample}')
-#     kitplugin.hyper_opt_KitNET("monday", sample, line_count)
-#     print('done optimizing')
+# results = kitplugin.shap_documenter("friday")
+#results = kitplugin.shap_documenter("tuesday")
+attacks1 = ["UNSW_Benign_medium"]
+for sample in attacks1:
+    with open(f"input_data/attack_types/noday_features_UNSW_Benign_medium.csv", newline='') as csvfile:
+        csv_reader = csv.reader(csvfile)
+        line_count = sum(1 for row in csv_reader)
+    print(f'lines: {line_count}')
+    kitplugin=KitPlugin()
+    print(f'optimizing kitnet for {sample}')
+    kitplugin.hyper_opt_KitNET("noday", sample, line_count)
+    print('done optimizing')
 
 import csv
 

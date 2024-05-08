@@ -992,7 +992,6 @@ class KitPlugin:
                         if label[0] == 'Src' or label[0] == 'id' or not label:
                             continue
                         if len(row) < 4:
-                            print('splitting')
                             row = row[0].split('\t')
                         if (row[4] == label[0] and row[6] == label[1] and row[5] == label[2] and row[7] == label[3]) or (row[4] == label[2] and row[6] == label[3] and row[5] == label[0] and row[7] == label[1]):
                             print('match')
@@ -1090,7 +1089,7 @@ class KitPlugin:
                     if counterValidate % 10000:
                         print("testing: "+str(counterValidate))
                     y_pred.append(score)
-            conv_y_pred = self.map_results_to_conversation(y_pred, f"input_data/attack_types/monday_sample_medium_validate2.pcap.tsv")
+            conv_y_pred = self.map_results_to_conversation(y_pred, f"input_data/attack_types/noday_UNSW_Benign_medium_validate.pcap.tsv")
             conv_y_pred = [max(values) for values in conv_y_pred.values()]
             trial.set_user_attr("training_error", np.mean(conv_train_err))
             trial.set_user_attr("train_median", np.median(conv_train_err))
@@ -1396,7 +1395,7 @@ class KitPlugin:
         return y_pred
 
     def run_trained_kitsune_from_feature_csv(self, test_path, test_start, test_limit, kit_path=False):
-        #kit = KitNET(100, 10, math.floor(12000000 * 0.05), math.floor(12000000 * 0.9), 0.30, 0.25)
+        # kit = KitNET(100, 10, math.floor(12000000 * 0.05), math.floor(12000000 * 0.9), 0.30, 0.25)
         # kit = KitNET(100, 50, math.floor(10000000 * 0.05), 10000000, 0.0005, 0.25)
         #
         #
@@ -1459,8 +1458,13 @@ class KitPlugin:
 
         counter = 0
         results = []
+        import csv
+        import time
+
         with open(test_path) as fp:
             rd_ft = csv.reader(fp, delimiter="\t", quotechar='"')
+            start_time = time.time()
+            packets_processed = 0
 
             for packet in rd_ft:
                 if packet:
@@ -1473,9 +1477,16 @@ class KitPlugin:
                     if counter < test_limit:
                         results.append(kit.execute(packet))
                         counter += 1
+                        packets_processed += 1
+
+                        elapsed_time = time.time() - start_time
+                        if elapsed_time >= 60:  # Check if one minute has passed
+                            print(f"Processed {packets_processed} packets in one minute.")
+                            break
                     else:
                         break
             fp.close()
+
         return results
 
     def run_trained_kitsune_from_tsv(self, test_path, test_limit):
@@ -1795,13 +1806,18 @@ class KitPlugin:
         #self.workbook.save(excel_file)
 
     def train_kitsune(self):
-        with open(f"input_data/attack_types/monday_features.csv", newline='') as csvfile:
-            csv_reader = csv.reader(csvfile)
-            line_count = sum(1 for row in csv_reader)
-        kit = KitNET(420, max_autoencoder_size=75, FM_grace_period=int(0.05*line_count),
+        # with open(f"input_data/attack_types/monday_features.csv", newline='') as csvfile:
+        #     csv_reader = csv.reader(csvfile)
+        #     line_count = sum(1 for row in csv_reader)
+        line_count = 11000000
+        kit = KitNET(420, max_autoencoder_size=75, FM_grace_period=int(0.05 * line_count),
                      AD_grace_period=line_count, learning_rate=0.001,
                      hidden_ratio=0.25)
         # Load the feature list beforehand to save time
+        import time
+        print('training Kitsune')
+        start_time = time.time()
+        packets_processed = 0
         counter = 0
         with open(f"input_data/attack_types/monday_features.csv") as fp:
             rd_ft = csv.reader(fp, delimiter="\t", quotechar='"')
@@ -1815,9 +1831,16 @@ class KitPlugin:
                         print("training: " + str(counter))
                     train_err.append(kit.train(packet))
                     counter += 1
+                    packets_processed += 1
+                    elapsed_time = time.time() - start_time
+                    if elapsed_time >= 60:  # Check if one minute has passed
+                        print(f"Processed {packets_processed} packets in one minute.")
+                        return
+
                 if counter >= line_count:
                     break
             fp.close()
+
         median_value = np.median(train_err)
         median_absolute_deviation = np.median([abs(number - median_value) for number in train_err])
         print('done training')

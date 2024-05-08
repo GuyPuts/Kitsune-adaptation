@@ -25,9 +25,9 @@ import numpy as np
 # SOFTWARE.
 
 class Kitsune:
-    def __init__(self,file_path,limit,max_autoencoder_size=10,FM_grace_period=None,AD_grace_period=10000,learning_rate=0.1,hidden_ratio=0.75):
+    def __init__(self,file_path,limit,max_autoencoder_size=10,FM_grace_period=None,AD_grace_period=10000,learning_rate=0.1,hidden_ratio=0.75,num_features=420):
         #init packet feature extractor (AfterImage)
-        self.FE = FE(file_path,limit)
+        self.FE = FE(file_path,limit,num_features)
         #init Kitnet
         self.AnomDetector = KitNET(self.FE.get_num_features(),max_autoencoder_size,FM_grace_period,AD_grace_period,learning_rate,hidden_ratio)
 

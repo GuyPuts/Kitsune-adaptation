@@ -1,16 +1,9 @@
-import csv
-import math
 import os
 import pickle
-import re
-from math import floor
 
 import numpy as np
-import pandas as pd
-from scapy.utils import rdpcap
-from random import sample
+
 import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt2
 
 from openpyxl import Workbook
 from openpyxl.chart import BarChart, Reference
@@ -19,125 +12,60 @@ from KitPlugin import KitPlugin
 from FeatureExtractor import FE
 from Kitsune import Kitsune
 
-inputs = {
-    "mirai_malicious": {
-        "input_path": "input_data/mirai.pcap",
-        "input_path_test": "input_data/mirai.pcap",
-        "packet_limit": 200000,
-        "maxAE": 10,
-        "FMgrace": 5000,
-        "ADgrace": 50000,
-        "training_min": 0,
-        "training_max": 60000,
-        "testing_min": 140330,
-        "testing_max": 140355
-    },
-    "mirai_benign": {
-        "input_path": "input_data/mirai.pcap",
-        "input_path_test": "input_data/mirai.pcap",
-        "packet_limit": 200000,
-        "maxAE": 10,
-        "FMgrace": 5000,
-        "ADgrace": 50000,
-        "training_min": 0,
-        "training_max": 60000,
-        "testing_min": 70000,
-        "testing_max": 70025
-    }
-}
-
-
-# KitPlugin = KitPlugin()
-# KitPlugin.hyper_opt("input_data/Monday-WorkingHours_10_percent_random.pcap", 100, 1000000)
-
-# Run series of statistics
-# KitPlugin.run_series_stats(inputs)
-# Get feature list from pickle file
-# KitPlugin.feature_loader()
-# Train Kitsune on the training data
-# KitPlugin.kit_trainer(training_min, training_max)
-# Calculate SHAP-values
-# KitPlugin.shap_values_builder(training_min, training_max, testing_min, testing_max)
-# Pickle SHAP-values
-# KitPlugin.shap_values_pickle()
-# Load SHAP-values
-# KitPlugin.shap_values_loader()
-# Calculate shap summary statistics
-# KitPlugin.shap_stats_summary_builder(testing_min, testing_max)
-# KitPlugin.shap_stats_excel_export()
-
-# Sample 10 percent of conversations
-# SampleKitPlugin = KitPlugin()
-##conversations = SampleKitPlugin.sample_percentage_conversations(10, "input_data/Monday_Split/17_01-18_01.pcapng", "input_data/Monday_Split/17_01-18_01-sample-10.pcap")
-# conversations = SampleKitPlugin.conversations_loader('pickles/17_01-18_01_sample_10_conv')
-# packets = rdpcap('input_data/Monday_Split/17_01-18_01-sample-10.pcap')
-# features = SampleKitPlugin.load_pcap_to_features('input_data/Monday_Split/17_01-18_01-sample-10.pcap')
-
-# print('conversations: '+str(len(conversations)))
-# print('packets: '+str(len(packets)))
-# print('feature lists: '+str(len(features)))
-
-# del SampleKitPlugin
-
-# NewKitPlugin = KitPlugin('input_data/Monday_Split/17_01-18_01-sample-10.pcap', num_autenc=6, FMgrace=int(0.05*len(features)), int(0.95*len(ADgrace)))
-
 def kitTester(day, attack_type, newFeatures=False):
     from KitPlugin import KitPlugin
     kitplugin = KitPlugin()
-    # print('reading labels file')
-    # labels = kitplugin.read_label_file(f'input_data/attack_types/{day}_{attack_type}.csv')
-    # iter = 0
-    # for label in labels:
-    #     if iter == 0:
-    #         iter += 1
-    #         continue
-    #     label.append(str(labels.index(label)))
-    #
-    # if newFeatures:
-    #     if not os.path.exists(f'input_data/{newFeatures}'):
-    #         os.makedirs(f'input_data/{newFeatures}')
-    #         print(f"Directory 'input_data/{newFeatures}' created successfully.")
-    #     else:
-    #         print(f"Directory 'input_data/{newFeatures}' already exists.")
-    #     if not os.path.exists(f'input_data/{newFeatures}/attack_types'):
-    #         os.makedirs(f'input_data/{newFeatures}/attack_types')
-    #         print(f"Directory 'input_data/{newFeatures}/attack_types' created successfully.")
-    #     else:
-    #         print(f"Directory 'input_data/{newFeatures}/attack_types' already exists.")
-    #
-    # print('sampling packets by conversation')
-    # if newFeatures:
-    #     kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
-    #                                              f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', labels)
-    # else:
-    #     kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
-    #                                          f'input_data/attack_types/{day}_{attack_type}.pcap.tsv', labels)
-    # #return True
-    #
-    # # Map samples to features of an existing featureList
-    # if newFeatures:
-    #     with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'r') as file:
-    #         lines = file.readlines()
-    #     # Remove blank lines
-    #     non_blank_lines = [line for line in lines if line.strip()]
-    #     with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'w') as file:
-    #         file.writelines(non_blank_lines)
-    #     fe = FE(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv')
-    #     fe.get_all_vectors(f'input_data/{newFeatures}/attack_types/{day}_features_{attack_type}.csv')
-    # else:
-    #     kitplugin.map_packets_to_features(f'input_data/attack_types/{day}_{attack_type}.pcap.tsv',
-    #                                   f'input_data/attack_types/{day}_features.csv',
-    #                                   f'input_data/attack_types/{day}_features_{attack_type}.csv')
-    #
-    # if newFeatures:
-    #     if not os.path.exists(f'pickles/{newFeatures}'):
-    #         os.makedirs(f'pickles/{newFeatures}')
-    #         print(f"Directory 'pickles/{newFeatures}' created successfully.")
-    #     else:
-    #         print(f"Directory 'pickles/{newFeatures}' already exists.")
-    #     print(day)
-    #     print(attack_type)
-    #     oops_we_have_to_train_kitsune_again('input_data/attack_types/monday_sample_medium_15.pcap.tsv', newFeatures)
+    print('reading labels file')
+    labels = kitplugin.read_label_file(f'input_data/attack_types/{day}_{attack_type}.csv')
+    iter = 0
+    for label in labels:
+        if iter == 0:
+            iter += 1
+            continue
+        label.append(str(labels.index(label)))
+
+    if newFeatures:
+        if not os.path.exists(f'input_data/{newFeatures}'):
+            os.makedirs(f'input_data/{newFeatures}')
+            print(f"Directory 'input_data/{newFeatures}' created successfully.")
+        else:
+            print(f"Directory 'input_data/{newFeatures}' already exists.")
+        if not os.path.exists(f'input_data/{newFeatures}/attack_types'):
+            os.makedirs(f'input_data/{newFeatures}/attack_types')
+            print(f"Directory 'input_data/{newFeatures}/attack_types' created successfully.")
+        else:
+            print(f"Directory 'input_data/{newFeatures}/attack_types' already exists.")
+
+    print('sampling packets by conversation')
+    if newFeatures:
+        kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
+                                                 f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', labels)
+    else:
+        kitplugin.sample_packets_by_conversation(f'input_data/{day.title()}-WorkingHours.pcap.tsv',
+                                             f'input_data/attack_types/{day}_{attack_type}.pcap.tsv', labels)
+
+    # Map samples to features of an existing featureList
+    if newFeatures:
+        with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'r') as file:
+            lines = file.readlines()
+        # Remove blank lines
+        non_blank_lines = [line for line in lines if line.strip()]
+        with open(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv', 'w') as file:
+            file.writelines(non_blank_lines)
+        fe = FE(f'input_data/{newFeatures}/attack_types/{day}_{attack_type}.pcap.tsv')
+        fe.get_all_vectors(f'input_data/{newFeatures}/attack_types/{day}_features_{attack_type}.csv')
+    else:
+        kitplugin.map_packets_to_features(f'input_data/attack_types/{day}_{attack_type}.pcap.tsv',
+                                      f'input_data/attack_types/{day}_features.csv',
+                                      f'input_data/attack_types/{day}_features_{attack_type}.csv')
+
+    if newFeatures:
+        if not os.path.exists(f'pickles/{newFeatures}'):
+            os.makedirs(f'pickles/{newFeatures}')
+            print(f"Directory 'pickles/{newFeatures}' created successfully.")
+        else:
+            print(f"Directory 'pickles/{newFeatures}' already exists.")
+        oops_we_have_to_train_kitsune_again('input_data/attack_types/monday_sample_medium_15.pcap.tsv', newFeatures)
     if newFeatures:
         results = kitplugin.run_trained_kitsune_from_feature_csv(
             f"input_data/{newFeatures}/attack_types/{day}_features_{attack_type}.csv", 0, np.Inf, kit_path=f"pickles/{newFeatures}/anomDetector.pkl")
@@ -179,102 +107,7 @@ def kitTester(day, attack_type, newFeatures=False):
         path = f'pickles/output_pickles_conv_basis/{day.title()}_{attack_type}_maxConvs.pkl'
     with open(path, 'wb') as f:
         pickle.dump(maxConvs, f)
-    with open(path, 'rb') as f:
-        test = pickle.load(f)
-    print(test)
     return maxConvs
-
-def plot_attack_boxplots(data_for_attack_types, include_outliers=True, log_scale=False):
-    attack_types = list(data_for_attack_types.keys())
-    data = list(data_for_attack_types.values())
-
-    # Storing information about actions taken
-    actions_taken = []
-
-    if log_scale:
-        data = [[val if val <= 0 else val for val in sublist] for sublist in data]
-        actions_taken.append('Log Scale')
-
-    plt.figure(figsize=(10, 6))
-
-    # Set showfliers parameter based on include_outliers argument
-    show_outliers = 'outliers' if include_outliers else False
-    if include_outliers:
-        actions_taken.append("outliers included")
-    else:
-        actions_taken.append("no outliers included")
-
-    # Create boxplots
-    bp = plt.boxplot(data, showfliers=show_outliers)
-
-    # Add sample count annotations to each boxplot
-    for i, box in enumerate(bp['boxes']):
-        # Calculate the number of samples for each boxplot
-        sample_count = len(data[i])
-
-        # Position the text annotation slightly above the boxplot
-        conv_count = 0
-        if len(data[i]) > 0:
-            conv_count = max(data[i])
-        plt.text(i + 1, conv_count, f'{sample_count} samples', ha='center', va='bottom')
-
-    plt.xticks(range(1, len(attack_types) + 1), attack_types, rotation=45)
-    plt.xlabel('Attack Types')
-    plt.ylabel('Values')
-
-    # Include information about actions taken in the title
-    title = 'Boxplots for Attack Types'
-    if actions_taken:
-        title += f' ({", ".join(actions_taken)})'
-
-    plt.title(title)
-
-    # Apply log scale if log_scale argument is True
-    if log_scale:
-        plt.yscale('log')
-
-    plt.tight_layout()
-    plt.figure(figsize=(14, 10))
-    plt.show()
-
-def create_attack_barchart_excel(data_for_attack_types):
-    attack_types = list(data_for_attack_types.keys())
-    data = list(data_for_attack_types.values())
-
-    # Create a workbook and add a worksheet
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Attack Bar Chart"
-
-    # Write attack types to the first column
-    for row, attack_type in enumerate(attack_types, start=1):
-        ws.cell(row=row, column=1, value=attack_type)
-
-    # Write data to worksheet
-    for col, attack_data in enumerate(data, start=2):
-        for row, value in enumerate(attack_data, start=1):
-            ws.cell(row=row, column=col, value=value)
-
-    # Create a bar chart
-    chart = BarChart()
-
-    # Set chart title and axis labels
-    chart.title = "Bar Chart for Attack Types"
-    chart.x_axis.title = 'Attack Types'
-    chart.y_axis.title = 'Values'
-
-    # Set data for the chart
-    values = Reference(ws, min_col=2, min_row=1, max_col=len(attack_types) + 1, max_row=len(attack_types[0]))
-    categories = Reference(ws, min_col=1, min_row=2, max_row=len(attack_types) + 1)
-    chart.add_data(values, titles_from_data=True)
-    chart.set_categories(categories)
-
-    # Set the chart position
-    ws.add_chart(chart, "E5")
-
-    # Save the workbook
-    wb.save("attack_barchart.xlsx")
-
 
 def oops_we_have_to_train_kitsune_again(path, newFeatures):
     if os.path.isfile(f"pickles/{newFeatures}/anomDetector.pkl"):
@@ -287,120 +120,6 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
     newkitnet = newKitsOnTheBlock.giveMeTheKit()
     with open(f"pickles/{newFeatures}/anomDetector.pkl", 'wb') as f:
         pickle.dump(newkitnet, f)
-
-
-
-# attacks2 = ["benign - small", "FTP-Patator", "FTP-Patator - Attempted", "SSH-Patator", "SSH-Patator - Attempted"]
-# for attack in attacks2:
-#     print(attack)
-#     convs.append(kitTester("tuesday", attack))
-
-
-# attacks = attacks1 + attacks2
-# attack_dict = {attack: conv for attack, conv in zip(attacks, convs)}
-# plot_attack_boxplots(attack_dict, include_outliers=False, log_scale=False)
-# plot_attack_boxplots(attack_dict, include_outliers=False, log_scale=True)
-# plot_attack_boxplots(attack_dict, include_outliers=True, log_scale=False)
-# plot_attack_boxplots(attack_dict, include_outliers=True, log_scale=True)
-# create_attack_barchart_excel(attack_dict)
-#kitplugin = KitPlugin(input_path="input_data/Monday-WorkingHours.pcap", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-#kitplugin.feature_builder("input_data/attack_types/monday_features_test.csv", True)
-
-#kitplugin = KitPlugin()
-#kitplugin.most_significant_packets_sampler("tuesday", 0.111966)
-# kitplugin.most_significant_packets_sampler("wednesday", 0.0739)
-# kitplugin.most_significant_packets_sampler("thursday", 0.111966)
-#kitplugin.most_significant_packets_sampler("friday", 0.2667368034640465)
-#results = kitplugin.shap_documenter("tuesday")
-# results = kitplugin.shap_documenter("wednesday")
-# results = kitplugin.shap_documenter("thursday")
-# results = kitplugin.shap_documenter("friday")
-# kitplugin.most_significant_packets_sampler("tuesday", 0.2667368034640465)
-#results = kitplugin.shap_documenter("wednesday")
-# print('shap done')
-# quit()
-# print('fri')
-# print(f"features: {line_count}")
-# with open(f"input_data/attack_types/friday_features_firsthalfsecondpart.csv", newline='') as csvfile:
-#     csv_reader = csv.reader(csvfile)
-#     for row in csv_reader:
-#         print(len(row))
-# quit()
-
-# for day in ['tuesday', 'wednesday', 'thursday', 'friday']:
-#     print(f'running {day}')
-#     kitplugin = KitPlugin(input_path=f"input_data/{day.title()}-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-#     kitplugin.feature_builder(f"input_data/attack_types/{day}_features_secondhalf.csv")
-#     print(f'{day} done')
-# quit()
-
-# kitplugin = KitPlugin(input_path=f"input_data/Wednesday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-# print('building features first')
-# kitplugin.feature_builder(f"input_data/attack_types/wednesday_features_hphp_5.csv", kind=2)
-# print('Done building features')
-# quit()
-# kitplugin = KitPlugin(input_path=f"input_data/Thursday-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
-# print('building features secondhalf')
-# kitplugin.feature_builder(f"input_data/attack_types/thursday_features_secondhalf.csv", kind=3)
-# # print('replacing entries')
-def replace_entries(file1_path, file2_path, file3_path, file4_path, file5_path, file6_path, file7_path, file8_path, file9_path, output_path):
-    with open(file1_path, 'r') as f1, open(file2_path, 'r') as f2, open(file3_path, 'r') as f3, open(file4_path, 'r') as f4, open(file5_path, 'r') as f5, open(file6_path, 'r') as f6, open(file7_path, 'r') as f7, open(file8_path, 'r') as f8, open(file9_path, 'r') as f9, open(output_path, 'w', newline='') as output_file:
-        reader1 = csv.reader(f1)
-        reader2 = csv.reader(f2)
-        reader3 = csv.reader(f3)
-        reader4 = csv.reader(f4)
-        reader5 = csv.reader(f5)
-        reader6 = csv.reader(f6)
-        reader7 = csv.reader(f7)
-        reader8 = csv.reader(f8)
-        reader9 = csv.reader(f9)
-        writer = csv.writer(output_file)
-
-        # Process File 1 and File 2
-        for i, (row1, row2, row3, row4, row5, row6, row7, row8, row9) in enumerate(zip(reader1, reader2, reader3, reader4, reader5, reader6, reader7, reader8, reader9)):
-            new_row = row1 + row2 + row3 + row4 + row5 + row6 + row7 + row8 + row9
-            writer.writerow(new_row)
-
-            # Optionally print current line number every 10,000 lines
-            if i % 10000 == 0:
-                print("Processed {} lines".format(i))
-
-file1_path = 'input_data/attack_types/wednesday_features_firsthalffirstpartfirst.csv'
-file2_path = 'input_data/attack_types/wednesday_features_hhjit_justatry.csv'
-file3_path = 'input_data/attack_types/wednesday_features_hphp_5.csv'
-file4_path = 'input_data/attack_types/wednesday_features_hphp_3.csv'
-file5_path = 'input_data/attack_types/wednesday_features_hphp_1.csv'
-file6_path = 'input_data/attack_types/wednesday_features_hphp_01.csv'
-file7_path = 'input_data/attack_types/wednesday_features_hphp_0_01.csv'
-file8_path = 'input_data/attack_types/wednesday_features_firsthalfsecondpart.csv'
-file9_path = 'input_data/attack_types/wednesday_features_secondhalf.csv'
-output_path = 'input_data/attack_types/wednesday_features.csv'
-#replace_entries(file1_path, file2_path, file3_path, file4_path, file5_path, file6_path, file7_path, file8_path, file9_path, output_path)
-
-# import csv
-
-# filename = 'input_data/attack_types/monday_features_sample_medium_validate2.csv'  # Replace 'example.csv' with your CSV file name
-#
-# data = []
-# with open(filename, 'r', newline='') as csvfile:
-#     csvreader = csv.reader(csvfile)
-#     for row in csvreader:
-#         data.append(row)
-#
-# pickle_file = 'pickles/medium_validate.pkl'
-# with open(pickle_file, 'wb') as f:
-#     pickle.dump(data, f)
-# #replace_entries(file1_path, file2_path, file3_path, output_path)
-# attacks1 = ["sample_medium_new2_50"]
-# for sample in attacks1:
-#     with open(f"input_data/attack_types/monday_features_{sample}.csv", newline='') as csvfile:
-#         csv_reader = csv.reader(csvfile)
-#         line_count = sum(1 for row in csv_reader)
-#     print(f'lines: {line_count}')
-#     kitplugin=KitPlugin()
-#     print(f'optimizing kitnet for {sample}')
-#     kitplugin.hyper_opt_KitNET("monday", sample, line_count)
-#     print('done optimizing')
 
 # attacks1 = ["sample_60"]
 attacks1 = ["benign - small", "SSH-Patator - Attempted", "SSH-Patator", "FTP-Patator", "FTP-Patator - Attempted"]

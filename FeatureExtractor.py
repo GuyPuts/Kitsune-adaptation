@@ -24,13 +24,14 @@ import csv
 # If wireshark is installed (tshark) it is used to parse (it's faster), otherwise, scapy is used (much slower).
 # If wireshark is used then a tsv file (parsed version of the pcap) will be made -which you can use as your input next time
 class FE:
-    def __init__(self,file_path,limit=np.inf):
+    def __init__(self,file_path,limit=np.inf,num_features=420):
         self.path = file_path
         self.limit = limit
         self.parse_type = None #unknown
         self.curPacketIndx = 0
         self.tsvin = None #used for parsing TSV file
         self.scapyin = None #used for parsing pcap with scapy
+        self.num_features = 420
 
         ### Prep pcap ##
         self.__prep__()
@@ -205,10 +206,7 @@ class FE:
         try:
             return self.nstat.updateGetStats(IPtype, srcMAC, dstMAC, srcIP, srcproto, dstIP, dstproto,
                                              int(framelen),
-                                             float(timestamp), tcpFlags=tcpFlags, kind=kind)
-            # return self.nstat.updateGetStats(IPtype, srcMAC, dstMAC, srcIP, srcproto, dstIP, dstproto,
-            #                                     int(framelen),
-            #                                     float(timestamp), tcpFlags=tcpFlags, payload = 0, ftp=True, ssh=True, sqlinj=sqlinj, xss=sqlinj, median=True, minmax=True)
+                                             float(timestamp), tcpFlags=tcpFlags)
         except Exception as e:
             print(e)
             return []
@@ -222,8 +220,7 @@ class FE:
         print("tshark parsing complete. File saved as: "+self.path +".tsv")
 
     def get_num_features(self):
-        return 420
-        return len(self.nstat.getNetStatHeaders())
+        return self.num_features
     
     def get_all_vectors(self, csv_path=False, single=False, extra=False, kind=1):
         vectorList = []

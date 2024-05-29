@@ -21,7 +21,7 @@ import random
 from scapy.all import PcapReader, PcapWriter, wrpcap, rdpcap, IP, TCP, UDP
 
 # Class that provides a callable interface for Kitsune components.
-# Note that this approach nullifies the "incremental" aspect of Kitsune and significantly slows it down.
+# Guy Puts, 2024
 class KitPlugin:
     # Function used by SHAP as callback to test instances of features
     def kitsune_model(self, input_data):
@@ -745,8 +745,7 @@ class KitPlugin:
             'hidden_ratio': [0.25, 0.5, 0.75],
             'FMgrace': [math.floor(0.05*training_cutoff), math.floor(0.10*training_cutoff), math.floor(0.20 * training_cutoff)]
         }
-        name = f"fixed_{attack_type}"
-        study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), storage="sqlite:///fixed.db", study_name=name, load_if_exists=True)
+        study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), storage=f"sqlite:///{attack_type}.db", study_name=attack_type, load_if_exists=True)
         study.optimize(objective, n_trials=3*9*3*3)
 
         # Create a new workbook and select the active worksheet
@@ -981,13 +980,13 @@ class KitPlugin:
             
             path = f'pickles/output_pickles/{day.title()}_{attack_type}shap_results.pkl'
             with open(path, 'wb') as f:
-                pickle.dump(shap_values, f)
+               pickle.dump(shap_values, f)
             # Could do this with a Regular Expression, but I'm a sane person
-            with open (f'pickles/output_pickles/{day.title()}_{attack_type}shap_results.pkl', 'rb') as f:
-               self.shap_values = pickle.load(f)
-            self.create_sheet(day, attack_type.replace("most_significant", "").replace("-", "").replace("_", "").replace(" ", ""))
-        excel_file = f"output_data/shap_{day}_{datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
-        self.workbook.save(excel_file)
+            #with open (f'pickles/output_pickles/{day.title()}_{attack_type}shap_results.pkl', 'rb') as f:
+            #   self.shap_values = pickle.load(f)
+            #self.create_sheet(day, attack_type.replace("most_significant", "").replace("-", "").replace("_", "").replace(" ", ""))
+        #excel_file = f"output_data/shap_{day}_{datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
+        #self.workbook.save(excel_file)
 
     def train_kitsune(self):
         with open(f"input_data/attack_types/monday_features.csv", newline='') as csvfile:

@@ -155,9 +155,9 @@ filename = 'input_data/attack_types/noday_features_UNSW_Benign_medium_validate.c
 # #kitplugin.most_significant_packets_sampler("tuesday", 0.111966)
 # results = kitplugin.shap_documenter("friday")
 #results = kitplugin.shap_documenter("tuesday")
-# attacks1 = ["UNSW_Benign_medium"]
+# attacks1 = ["UNSW_Benign_small", "UNSW_Benign_medium"]
 # for sample in attacks1:
-#     with open(f"input_data/attack_types/noday_features_UNSW_Benign_medium.csv", newline='') as csvfile:
+#     with open(f"input_data/attack_types/noday_features_{sample}.csv", newline='') as csvfile:
 #         csv_reader = csv.reader(csvfile)
 #         line_count = sum(1 for row in csv_reader)
 #     print(f'lines: {line_count}')
@@ -185,15 +185,50 @@ def filter_csv_columns(input_path, column_indices, output_path):
 
 # input_file = "input_data/attack_types/tuesday_features.csv"
 # output_file = "input_data/attack_types/tuesday_features_removed_tcp"
-# columns_to_keep = [2, 5, 10]  # Example: Keep columns 2, 5, and 10
+# columns_to_keep = [2, 5, 10]
 # filtered_file = filter_csv_columns(input_file, columns_to_keep, output_file)
 # print("Filtered CSV file saved as:", filtered_file)
+
 import csv
 
-kitplugin = KitPlugin()
-kitplugin.train_kitsune()
+# kitplugin = KitPlugin()
+# kitplugin.train_kitsune()
 # convs = []
 # attacks2 = ["test_attack"]
 # for attack in attacks2:
 #     print(attack)
 #     convs.append(kitTester("monday", attack))
+
+
+def replace_entries(file1_path, file2_path, file3_path, file4_path, file5_path, file6_path, file7_path, file8_path, file9_path, output_path):
+    with open(file1_path, 'r') as f1, open(file2_path, 'r') as f2, open(file3_path, 'r') as f3, open(file4_path, 'r') as f4, open(file5_path, 'r') as f5, open(file6_path, 'r') as f6, open(file7_path, 'r') as f7, open(file8_path, 'r') as f8, open(file9_path, 'r') as f9, open(output_path, 'w', newline='') as output_file:
+        reader1 = csv.reader(f1)
+        reader2 = csv.reader(f2)
+        reader3 = csv.reader(f3)
+        reader4 = csv.reader(f4)
+        reader5 = csv.reader(f5)
+        reader6 = csv.reader(f6)
+        reader7 = csv.reader(f7)
+        reader8 = csv.reader(f8)
+        reader9 = csv.reader(f9)
+        writer = csv.writer(output_file)
+
+        # Process File 1 and File 2
+        for i, (row1, row2, row3, row4, row5, row6, row7, row8, row9) in enumerate(zip(reader1, reader2, reader3, reader4, reader5, reader6, reader7, reader8, reader9)):
+            new_row = row1 + row2 + row3 + row4 + row5 + row6 + row7 + row8 + row9
+            writer.writerow(new_row)
+
+            # Optionally print current line number every 10,000 lines
+            if i % 10000 == 0:
+                print("Processed {} lines".format(i))
+
+# file1_path = 'input_data/attack_types/wednesday_features_firsthalffirstpartfirst.csv'
+# file2_path = 'input_data/attack_types/wednesday_features_hhjit_.csv'
+# file3_path = 'input_data/attack_types/wednesday_features_hphp_5.csv'
+# file4_path = 'input_data/attack_types/wednesday_features_hphp_3.csv'
+# file5_path = 'input_data/attack_types/wednesday_features_hphp_1.csv'
+# file6_path = 'input_data/attack_types/wednesday_features_hphp_01.csv'
+# file7_path = 'input_data/attack_types/wednesday_features_hphp_0_01.csv'
+# file8_path = 'input_data/attack_types/wednesday_features_firsthalfsecondpart.csv'
+# file9_path = 'input_data/attack_types/wednesday_features_secondhalf.csv'
+# output_path = 'input_data/attack_types/wednesday_features.csv'

@@ -121,6 +121,13 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
     with open(f"pickles/{newFeatures}/anomDetector.pkl", 'wb') as f:
         pickle.dump(newkitnet, f)
 
+# for day in ['tuesday', 'wednesday', 'thursday', 'friday']:
+#     print(f'running {day}')
+#     kitplugin = KitPlugin(input_path=f"input_data/{day.title()}-WorkingHours.pcap.tsv", packet_limit=np.Inf, num_autenc=50, FMgrace=None, ADgrace=None, learning_rate=0.1, hidden_ratio=0.75)
+#     kitplugin.feature_builder(f"input_data/attack_types/{day}_features_secondhalf.csv")
+#     print(f'{day} done')
+# quit()
+
 # data = []
 # with open(filename, 'r', newline='') as csvfile:
 #     csvreader = csv.reader(csvfile)

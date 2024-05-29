@@ -121,25 +121,6 @@ def oops_we_have_to_train_kitsune_again(path, newFeatures):
     with open(f"pickles/{newFeatures}/anomDetector.pkl", 'wb') as f:
         pickle.dump(newkitnet, f)
 
-# attacks1 = ["sample_60"]
-attacks1 = ["benign - small", "SSH-Patator - Attempted", "SSH-Patator", "FTP-Patator", "FTP-Patator - Attempted"]
-# # attacks1 = ["sample_medium_15"]
-# # attacks1 = ["benign - small"]
-#attacks1 = ["benign - small", "Infiltration", "Infiltration - Attempted", "Infiltration - Portscan", "Web Attack - Brute Force - Attempted", "Web Attack - Brute Force", "Web Attack - SQL Injection", "Web Attack - SQL Injection - Attempted", "Web Attack - XSS", "Web Attack - XSS - Attempted"]
-attacks1 = ["benign - small", "Botnet - Attempted", "Botnet", "DDoS", "Portscan"]
-attacks1 = ["UNSW_Analysis", "UNSW_Backdoor", "UNSW_Exploits", "UNSW_Generic", "UNSW_Reconnaissance", "UNSW_Shellcode", "UNSW_Worms"]
-
-attacks1 = ['UNSW_Benign_medium', 'UNSW_Benign_medium_validate', 'UNSW_Benign_medium_test']
-convs = []
-attacks1 = ["benign - small - sanity_check"]
-convs = []
-
-attacks1 = ['UNSW_Benign_medium_test']
-convs = []
-
-
-filename = 'input_data/attack_types/noday_features_UNSW_Benign_medium_validate.csv'  # Replace 'example.csv' with your CSV file name
-
 # data = []
 # with open(filename, 'r', newline='') as csvfile:
 #     csvreader = csv.reader(csvfile)
@@ -150,11 +131,6 @@ filename = 'input_data/attack_types/noday_features_UNSW_Benign_medium_validate.c
 # with open(pickle_file, 'wb') as f:
 #     pickle.dump(data, f)
 
-# kitplugin = KitPlugin()
-#kitplugin.most_significant_packets_sampler("wednesday", 0.111966)
-# #kitplugin.most_significant_packets_sampler("tuesday", 0.111966)
-# results = kitplugin.shap_documenter("friday")
-#results = kitplugin.shap_documenter("tuesday")
 # attacks1 = ["UNSW_Benign_small", "UNSW_Benign_medium"]
 # for sample in attacks1:
 #     with open(f"input_data/attack_types/noday_features_{sample}.csv", newline='') as csvfile:
@@ -199,6 +175,10 @@ import csv
 #     print(attack)
 #     convs.append(kitTester("monday", attack))
 
+# kitplugin = KitPlugin()
+#kitplugin.most_significant_packets_sampler("wednesday", 0.111966)
+# #kitplugin.most_significant_packets_sampler("tuesday", 0.111966)
+# results = kitplugin.shap_documenter("friday")
 
 def replace_entries(file1_path, file2_path, file3_path, file4_path, file5_path, file6_path, file7_path, file8_path, file9_path, output_path):
     with open(file1_path, 'r') as f1, open(file2_path, 'r') as f2, open(file3_path, 'r') as f3, open(file4_path, 'r') as f4, open(file5_path, 'r') as f5, open(file6_path, 'r') as f6, open(file7_path, 'r') as f7, open(file8_path, 'r') as f8, open(file9_path, 'r') as f9, open(output_path, 'w', newline='') as output_file:
